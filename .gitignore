@@ -4,3 +4,5 @@ data/catalog-in-stock.json
 data/catalog-out-of-stock.json
 data/*-in-stock-table.md
 data/*-in-stock-table.html
+
+*.code-workspace
