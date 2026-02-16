@@ -7,6 +7,7 @@
   const excludePreorder = document.getElementById('exclude-preorder');
 
   let allItems = [];
+  let talentSearchTerms = {};
   let sortKey = 'date';
   let sortAsc = false;
 
@@ -28,15 +29,40 @@
     return isNaN(t) ? 0 : t;
   }
 
+  function textContains(text, term) {
+    if (!text || !term) return false;
+    var hasCjk = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf]/.test(term);
+    if (hasCjk) return text.indexOf(term) !== -1;
+    return text.toLowerCase().indexOf(term.toLowerCase()) !== -1;
+  }
+
+  function rowMatchesTalent(row, talentVal, terms) {
+    if ((row.talent || '').toLowerCase() === talentVal.toLowerCase()) return true;
+    if (!terms || terms.length === 0) return false;
+    var item = row.item || '';
+    var title = row.title || '';
+    for (var i = 0; i < terms.length; i++) {
+      if (textContains(item, terms[i]) || textContains(title, terms[i])) return true;
+    }
+    return false;
+  }
+
+  function isDigitalVoiceContent(row) {
+    var title = (row.title || '') + ' ';
+    var item = row.item || '';
+    var text = title + item;
+    return /\bvoice\b|ボイス/i.test(text);
+  }
+
   function applyFilters() {
     const talentVal = (filterTalent.value || '').trim();
     const hideDigital = excludeDigital.checked;
     const hidePreorder = excludePreorder.checked;
 
     return allItems.filter(function (row) {
-      if (hideDigital && row.isDigital) return false;
+      if (hideDigital && (row.isDigital || isDigitalVoiceContent(row))) return false;
       if (hidePreorder && row.isPreorder) return false;
-      if (talentVal && (row.talent || '').toLowerCase() !== talentVal.toLowerCase()) return false;
+      if (talentVal && !rowMatchesTalent(row, talentVal, talentSearchTerms[talentVal])) return false;
       return true;
     });
   }
@@ -110,10 +136,23 @@
   function populateFilters() {
     const byLower = new Map();
     allItems.forEach(function (r) {
-      const t = (r.talent || '').trim();
-      if (!t) return;
-      const k = t.toLowerCase();
-      if (!byLower.has(k)) byLower.set(k, titleCase(t));
+      var t = (r.talent || '').trim();
+      if (t) {
+        var k = t.toLowerCase();
+        if (!byLower.has(k)) byLower.set(k, titleCase(t));
+      }
+      var item = r.item || '';
+      var title = r.title || '';
+      for (var talentName in talentSearchTerms) {
+        var terms = talentSearchTerms[talentName];
+        for (var i = 0; i < terms.length; i++) {
+          if (textContains(item, terms[i]) || textContains(title, terms[i])) {
+            var key = talentName.toLowerCase();
+            if (!byLower.has(key)) byLower.set(key, titleCase(talentName));
+            break;
+          }
+        }
+      }
     });
     const talents = Array.from(byLower.values()).sort(function (a, b) { return a.localeCompare(b, undefined, { sensitivity: 'base' }); });
 
@@ -136,19 +175,35 @@
     });
   }
 
+  function buildSearchTermsFromMap(jpToEn) {
+    if (!jpToEn || typeof jpToEn !== 'object') return {};
+    var enToJp = {};
+    for (var jp in jpToEn) { var en = jpToEn[jp]; if (!enToJp[en]) enToJp[en] = []; enToJp[en].push(jp); }
+    var terms = {};
+    for (var en in enToJp) terms[en] = [en].concat(enToJp[en]);
+    return terms;
+  }
+
   Promise.all([
     fetch('data/items.json').then(function (res) {
       if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
       return res.json();
     }),
-    fetch('data/talent-jp-to-en.json').then(function (res) { return res.ok ? res.json() : null; }).catch(function () { return null; })
+    fetch('data/talent-jp-to-en.json').then(function (res) { return res.ok ? res.json() : null; }).catch(function () { return null; }),
+    fetch('data/talent-search-terms.json').then(function (res) { return res.ok ? res.json() : null; }).catch(function () { return null; })
   ]).then(function (results) {
     loadingEl.remove();
     const data = results[0];
     allItems = data.items || [];
     applyTalentMap(allItems, results[1]);
+    talentSearchTerms = results[2] && Object.keys(results[2]).length ? results[2] : buildSearchTermsFromMap(results[1]);
+    var seen = {};
+    allItems.forEach(function (r) {
+      var t = (r.talent || '').trim();
+      if (t && !talentSearchTerms[t]) talentSearchTerms[t] = [t];
+    });
     populateFilters();
-    renderTable(allItems);
+    renderTable(applyFilters());
     var lastEl = document.getElementById('last-updated');
     if (lastEl && data.builtAt) {
       try {

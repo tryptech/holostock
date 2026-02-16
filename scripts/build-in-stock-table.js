@@ -74,45 +74,127 @@ function talentEnglishOnly(s) {
 
 /** Map Japanese talent names (from Talent_ tags) to English so they merge with vendor spelling in the filter. */
 const TALENT_JP_TO_EN = {
-  '星街すいせい': 'Hoshimachi Suisei',
-  '博衣こより': 'Hakui Koyori',
-  'ラプラス・ダークネス': 'La+ Darknesss',
-  '不知火フレア': 'Shiranui Flare',
-  '癒月ちょこ': 'Yuzuki Choco',
-  'ジュラルド・ティー・レクスフォード': 'Jurard T Rexford',
-  '虎金妃笑虎': 'Koganei Niko',
-  '輪堂千速': 'Rindo Chihaya',
-  'ラオーラ・パンテーラ': 'Raora Panthera',
-  '姫森ルーナ': 'Himemori Luna',
-  '水宮枢': 'Mizumiya Su',
-  '尾丸ポルカ': 'Omaru Polka',
-  '鷹嶺ルイ': 'Takane Lui',
-  '風真いろは': 'Hiodoshi Ao',
-  '儒烏風亭らでん': 'Juufuutei Raden',
-  '百鬼あやめ': 'Nakiri Ayame',
-  '雪花ラミィ': 'Yukihana Lamy',
-  'エリザベス・ローズ・ブラッドフレイム': 'Elizabeth Rose Bloodflame',
-  'アーニャ・メルフィッサ': 'Anya Melfissa',
-  'アキ・ローゼンタール': 'Aki Rosenthal',
-  'アステル・レダ': 'Astel Leda',
-  'アユンダ・リス': 'Ayunda Risu',
-  'がうる・ぐら': 'Gawr Gura',
-  'こぼ・かなえる': 'Kobo Kanaeru',
-  'さくらみこ': 'Sakura Miko',
+  // Gen 0
   'ときのそら': 'Tokino Sora',
-  'フワワ・アビスガード': 'Fuwawa Abyssgard',
-  'ワトソン・アメリア': 'Watson Amelia',
-  '兎田ぺこら': 'Usada Pekora',
-  '夏色まつり': 'Natsuiro Matsuri',
-  '大神ミオ': 'Ookami Mio',
-  '大空スバル': 'Oozora Subaru',
-  '天音かなた': 'Amane Kanata',
-  '宝鐘マリン': 'Houshou Marine',
-  '春先のどか': 'Harusaki Nodoka',
-  '獅白ぼたん': 'Shishiro Botan',
+  'ロボ子さん': 'Roboco',
+  'さくらみこ': 'Sakura Miko',
+  '星街すいせい': 'Hoshimachi Suisei',
+  // AZKi has no JP variant in tags; vendor uses AZKi
+  // Gen 1
   '白上フブキ': 'Shirakami Fubuki',
+  '夏色まつり': 'Natsuiro Matsuri',
+  'アキ・ローゼンタール': 'Aki Rosenthal',
+  '赤井はあと': 'Akai Haato',
+  // Gen 2
+  '百鬼あやめ': 'Nakiri Ayame',
+  '癒月ちょこ': 'Yuzuki Choco',
+  '大空スバル': 'Oozora Subaru',
+  // Gamers
+  '大神ミオ': 'Ookami Mio',
+  '猫又おかゆ': 'Nekomata Okayu',
+  '戌神ころね': 'Inugami Korone',
+  // Gen 3
+  '兎田ぺこら': 'Usada Pekora',
+  '不知火フレア': 'Shiranui Flare',
+  '白銀ノエル': 'Shirogane Noel',
+  '宝鐘マリン': 'Houshou Marine',
+  // Gen 4
+  '角巻わため': 'Tsunomaki Watame',
+  '常闇トワ': 'Tokoyami Towa',
+  '姫森ルーナ': 'Himemori Luna',
+  // Gen 5
+  '雪花ラミィ': 'Yukihana Lamy',
+  '桃鈴ねね': 'Momosuzu Nene',
+  '獅白ぼたん': 'Shishiro Botan',
+  '尾丸ポルカ': 'Omaru Polka',
+  // holoX / Gen 6
+  'ラプラス・ダークネス': 'La+ Darknesss',
+  '鷹嶺ルイ': 'Takane Lui',
+  '博衣こより': 'Hakui Koyori',
+  '沙花叉クロヱ': 'Sakamata Chloe',
+  '風真いろは': 'Kazama Iroha',
+  // ID Gen 1
+  'アユンダ・リス': 'Ayunda Risu',
+  'ムーナ・ホシノヴァ': 'Moona Hoshinova',
+  'アイラニ・イオフィフティーン': 'Airani Iofifteen',
+  // ID Gen 2
+  'クレイジー・オリー': 'Kureiji Ollie',
+  'アーニャ・メルフィッサ': 'Anya Melfissa',
+  'パヴォリア・レイネ': 'Pavolia Reine',
+  // ID Gen 3
+  'ベスティア・ゼータ': 'Vestia Zeta',
+  'カエラ・コヴァルスキア': 'Kaela Kovalskia',
+  'こぼ・かなえる': 'Kobo Kanaeru',
+  // EN Myth
+  '森カリオペ': 'Mori Calliope',
+  '小鳥遊キアラ': 'Takanashi Kiara',
+  '一伊那尓栖': 'Ninomae Ina\'nis',
+  'ワトソン・アメリア': 'Watson Amelia',
+  'がうる・ぐら': 'Gawr Gura',
+  // EN Promise / Council / Project HOPE
+  'オーロ・クロニー': 'Ouro Kronii',
+  'ハコス・ベールズ': 'Hakos Baelz',
+  // EN Advent
+  'シオリ・ノヴェラ': 'Shiori Novella',
+  '古石ビジュー': 'Koseki Bijou',
+  'ネリッサ・レイヴンクロフト': 'Nerissa Ravencroft',
+  'フワワ・アビスガード': 'Fuwawa Abyssgard',
+  'モココ・アビスガード': 'Mococo Abyssgard',
+  // EN Justice
+  'エリザベス・ローズ・ブラッドフレイム': 'Elizabeth Rose Bloodflame',
+  'ジジ・ムリン': 'Gigi Murin',
+  'セシリア・イマーグリーン': 'Cecilia Immergreen',
+  'ラオーラ・パンテーラ': 'Raora Panthera',
+  // ReGLOSS
+  '音乃瀬奏': 'Otonose Kanade',
+  '一条莉々華': 'Ichijou Ririka',
+  '儒烏風亭らでん': 'Juufuutei Raden',
+  '轟はじめ': 'Todoroki Hajime',
+  // FLOW GLOW
+  '響咲リオナ': 'Isaki Riona',
+  '虎金妃笑虎': 'Koganei Niko',
+  '水宮枢': 'Mizumiya Su',
+  '輪堂千速': 'Rindo Chihaya',
   '綺々羅々ヴィヴィ': 'Kikirara Vivi',
-
+  // HOLOSTARS 1st
+  '花咲みやび': 'Hanasaki Miyabi',
+  '奏手イヅル': 'Kanade Izuru',
+  'アルランディス': 'Arurandeisu',
+  'リッカロイド': 'Rikkaroid',
+  // HOLOSTARS 2nd
+  'アステル・レダ': 'Astel Leda',
+  '岸堂テンマ': 'Kishido Temma',
+  '夕刻ロベル': 'Yukoku Roberu',
+  // HOLOSTARS 3rd
+  '影山シエン': 'Kageyama Shien',
+  '荒咬オウガ': 'Aragami Oga',
+  // UPROAR!!
+  '矢戸乃上フウマ': 'Yatogami Fuma',
+  '宇佐美うゆ': 'Utsugi Uyu',
+  '水無世燐央': 'Minase Rio',
+  // Tempus
+  'レギス・アルテア': 'Regis Altare',
+  'アキロゼ': 'Axel Syrios',
+  'ガヴィス・ベッテル': 'Gavis Bettel',
+  'マキナ・X・フレオン': 'Machina X Flayon',
+  '斑目ハッカ': 'Banzoin Hakka',
+  '定利シュンリ': 'Josuiji Shinri',
+  // Armis
+  'ジュラルド・ティー・レクスフォード': 'Jurard T Rexford',
+  'ゴールドブレット': 'Goldbullet',
+  'オクタビオ': 'Octavio',
+  'クリムゾン・ルーズ': 'Crimzon Ruze',
+  // Alumni / graduates (may still appear in shop)
+  '湊あくあ': 'Minato Aqua',
+  '紫咲シオン': 'Murasaki Shion',
+  '天音かなた': 'Amane Kanata',
+  '桐生ココ': 'Kiryu Coco',
+  'セレス・ファウナ': 'Ceres Fauna',
+  '七詩ムメイ': 'Nanashi Mumei',
+  '火威青': 'Hiodoshi Ao',
+  '春先のどか': 'Harusaki Nodoka',
+  '九十九佐命': 'Tsukumo Sana',
+  'ヨゾラ・メル': 'Yozora Mel',
 };
 
 /** Talent from product: prefer vendor (English) when not generic; else Talent_* tag. Normalize JP to EN via map; strip "both" format. */
@@ -342,7 +424,29 @@ async function main() {
     const mapPath = path.join(dir, 'talent-jp-to-en.json');
     fs.writeFileSync(mapPath, JSON.stringify(TALENT_JP_TO_EN, null, 2), 'utf8');
     console.log('Wrote:', mapPath);
+    const searchTerms = buildTalentSearchTerms(rows);
+    const searchTermsPath = path.join(dir, 'talent-search-terms.json');
+    fs.writeFileSync(searchTermsPath, JSON.stringify(searchTerms, null, 2), 'utf8');
+    console.log('Wrote:', searchTermsPath);
   }
+}
+
+/** Build { "Talent Name": ["Talent Name", "日本語"], ... } for filtering by item/title. */
+function buildTalentSearchTerms(rows) {
+  const enToJp = {};
+  for (const [jp, en] of Object.entries(TALENT_JP_TO_EN)) {
+    if (!enToJp[en]) enToJp[en] = [];
+    enToJp[en].push(jp);
+  }
+  const terms = {};
+  for (const [en, jpList] of Object.entries(enToJp)) {
+    terms[en] = [en, ...jpList];
+  }
+  const talentsInData = new Set(rows.map((r) => r.talent).filter(Boolean));
+  for (const t of talentsInData) {
+    if (!terms[t]) terms[t] = [t];
+  }
+  return terms;
 }
 
 main().catch((err) => {
