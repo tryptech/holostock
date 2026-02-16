@@ -39,7 +39,7 @@ Optional: override API key with `API_KEY=... node scripts/fetch-full-catalog.js`
 ## GitHub Actions
 
 - **Workflow:** `.github/workflows/update-catalog.yml`
-- **Triggers:** push to `main`, `workflow_dispatch`, and daily at 06:00 UTC.
+- **Triggers:** push to `main`, `workflow_dispatch`, and every hour.
 - **Steps:** checkout → Node 20 → fetch full catalog → build table with `--output-json data/items.json` → commit and push `data/items.json` and `data/talent-jp-to-en.json` if changed (commit message includes `[skip ci]` to avoid re-triggering).
 - **Permissions:** `contents: write` so the job can push the data commit.
 
@@ -47,4 +47,4 @@ To enable: push the repo to GitHub and ensure the default branch is `main` (or c
 
 ## GitHub Pages
 
-**Settings → Pages → Build and deployment**: Source = **GitHub Actions** (recommended), or **Deploy from a branch** with branch `main` and folder **/ (root)**. The app is at repo root (`index.html`, `js/`, `data/`), so the default branch root works as the site root.
+**Settings → Pages → Build and deployment**: **Deploy from a branch** → branch `main`, folder **/ (root)**. The SPA is built to run from the repo root: `index.html` and the script/data paths (`js/app.js`, `data/items.json`, `data/talent-jp-to-en.json`) are all relative, so the branch root must be the document root. No build step is required for the front end.

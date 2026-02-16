@@ -24,6 +24,8 @@
     tbody tr:hover { background: #2d2d2d; }
     a { color: #7eb8da; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .subheading { color: #888; font-size: 0.9rem; margin: 0 0 0.5rem 0; }
+    .last-updated { font-style: italic; }
     .count { color: #888; font-size: 0.9rem; margin-bottom: 0.5rem; }
     .loading, .error { padding: 1rem; color: #aaa; }
     .error { color: #c66; }
@@ -31,6 +33,7 @@
 </head>
 <body>
   <h1>hololive shop – In-stock items</h1>
+  <p class="subheading">Data is updated every hour. <span id="last-updated" class="last-updated"></span></p>
   <div class="filters">
     <div class="filter-group">
       <label for="filter-talent">Talent</label>

@@ -4,7 +4,7 @@
  * Usage (run from repo root):
  *   node scripts/build-in-stock-table.js [in-stock.json]           Output Markdown + HTML table.
  *   node scripts/build-in-stock-table.js --physical-only            Keep only physical products (info API returns []).
- *   node scripts/build-in-stock-table.js --output-json <path>       Also write { items } JSON for the SPA (e.g. site/data/items.json).
+ *   node scripts/build-in-stock-table.js --output-json <path>       Also write { items } JSON for the SPA (e.g. data/items.json).
  *
  * Default input: data/catalog-in-stock.json
  * Output: in-stock-table.md, in-stock-table.html (next to the input file or in data/).

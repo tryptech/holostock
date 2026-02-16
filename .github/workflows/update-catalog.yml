@@ -37,11 +37,11 @@ jobs:
       - name: Build in-stock table and SPA data
         env:
           BUILD_TIMESTAMP: ${{ steps.set-time.outputs.timestamp }}
-        run: node scripts/build-in-stock-table.js data/catalog-in-stock.json --output-json site/data/items.json
+        run: node scripts/build-in-stock-table.js data/catalog-in-stock.json --output-json data/items.json
 
       - name: Commit and push if data changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add site/data/items.json site/data/talent-jp-to-en.json
+          git add data/items.json data/talent-jp-to-en.json
           git diff --staged --quiet || (git commit -m "chore: update catalog data [skip ci]" && git push)
