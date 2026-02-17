@@ -15,12 +15,34 @@
   let sortKey = 'date';
   let sortAsc = false;
   let urlReplaceTimeout = null;
+  let searchInputTimeout = null;
   const URL_PARAM_DEBOUNCE_MS = 100;
+  const SEARCH_DEBOUNCE_MS = 180;
+  const mediaTable = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(min-width: 1025px)') : null;
+  let useTableView = mediaTable ? mediaTable.matches : true;
 
   function escapeHtml(s) {
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
+    if (s == null) return '';
+    var str = String(s);
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function itemCellHtml(r, prefix) {
+    var itemStr = r.item || '—';
+    var slashIdx = itemStr.indexOf('/');
+    var beforeClass = prefix + '-item-before';
+    var afterClass = prefix + '-item-after';
+    var linkClass = prefix === 'cell' ? prefix + '-item-link' : prefix + '-link';
+    var inner = slashIdx === -1
+      ? '<span class="' + afterClass + '">' + escapeHtml(itemStr) + '</span>'
+      : '<span class="' + beforeClass + '">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="' + afterClass + '">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>';
+    if (r.productUrl) return '<a href="' + escapeHtml(r.productUrl) + '" class="' + linkClass + '" target="_blank" rel="noopener">' + inner + '</a>';
+    return inner;
   }
 
   function parsePrice(priceStr) {
@@ -116,107 +138,72 @@
     if (sortModeSelect) sortModeSelect.value = sortKey + '_' + (sortAsc ? 'asc' : 'desc');
 
     const sorted = sortRows(rows);
-    let tableHtml =
-      '<table class="items-table"><thead><tr>' +
-      '<th class="cell-title" data-sort="title">Collection <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th class="no-sort">Image</th>' +
-      '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th></tr></thead><tbody>';
+    var html = '';
 
-    let cardsHtml = '<div class="item-cards">';
-
-    sorted.forEach(function (r) {
-      var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
-      tableHtml += '<tr>';
-      tableHtml += '<td class="cell-title">' + escapeHtml(r.title || '—') + '</td>';
-      tableHtml += '<td class="cell-item">';
-      (function () {
-        var itemStr = r.item || '—';
-        var slashIdx = itemStr.indexOf('/');
-        var inner = slashIdx === -1
-          ? '<span class="cell-item-after">' + escapeHtml(itemStr) + '</span>'
-          : '<span class="cell-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="cell-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>';
-        if (r.productUrl) tableHtml += '<a href="' + escapeHtml(r.productUrl) + '" class="cell-item-link" target="_blank" rel="noopener">' + inner + '</a>';
-        else tableHtml += inner;
-      })();
-      tableHtml += '</td>';
-      tableHtml += '<td class="cell-image">';
-      if (r.imageUrl) tableHtml += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
-      else tableHtml += '—';
-      tableHtml += '</td>';
-      tableHtml += '<td>' + escapeHtml(r.price || '—') + '</td>';
-      tableHtml += '<td>' + escapeHtml(stockStr) + '</td>';
-      tableHtml += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td></tr>';
-
-      cardsHtml += '<article class="item-card">';
-      cardsHtml += '<div class="card-thumb">';
-      if (r.imageUrl) cardsHtml += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
-      else cardsHtml += '<span class="card-no-img">—</span>';
-      cardsHtml += '</div>';
-      cardsHtml += '<div class="card-main">';
-      cardsHtml += '<div class="card-title">' + escapeHtml(r.title || '—') + '</div>';
-      (function () {
-        var itemStr = r.item || '—';
-        var slashIdx = itemStr.indexOf('/');
-        var openLink = r.productUrl ? ('<a href="' + escapeHtml(r.productUrl) + '" class="card-link" target="_blank" rel="noopener">') : '';
-        var closeLink = r.productUrl ? '</a>' : '';
-        if (slashIdx === -1) {
-          cardsHtml += '<div class="card-item">' + openLink + '<span class="card-item-after">' + escapeHtml(itemStr) + '</span>' + closeLink + '</div>';
-        } else {
-          cardsHtml += '<div class="card-item">' + openLink + '<span class="card-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="card-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>' + closeLink + '</div>';
-        }
-      })();
-      cardsHtml += '</div>';
-      cardsHtml += '<div class="card-right">';
-      cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
-      cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
-      cardsHtml += '</div>';
-      cardsHtml += '</article>';
-    });
-
-    tableHtml += '</tbody></table>';
-    cardsHtml += '</div>';
-
-    tableContainer.innerHTML = '<div class="table-wrap">' + tableHtml + '</div><div class="cards-wrap">' + cardsHtml + '</div>';
-
-    tableContainer.querySelectorAll('th[data-sort]').forEach(function (th) {
-      th.addEventListener('click', function () {
-        const k = th.getAttribute('data-sort');
-        if (sortKey === k) sortAsc = !sortAsc;
-        else { sortKey = k; sortAsc = true; }
-        renderTable(applyFilters());
+    if (useTableView) {
+      var thead =
+        '<table class="items-table"><thead><tr>' +
+        '<th class="cell-title" data-sort="title">Collection <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+        '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+        '<th class="no-sort">Image</th>' +
+        '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+        '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+        '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th></tr></thead><tbody>';
+      var tableRows = [];
+      sorted.forEach(function (r) {
+        var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
+        var row = '<tr>';
+        row += '<td class="cell-title">' + escapeHtml(r.title || '—') + '</td>';
+        row += '<td class="cell-item">' + itemCellHtml(r, 'cell') + '</td>';
+        row += '<td class="cell-image">';
+        if (r.imageUrl) row += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
+        else row += '—';
+        row += '</td>';
+        row += '<td>' + escapeHtml(r.price || '—') + '</td>';
+        row += '<td>' + escapeHtml(stockStr) + '</td>';
+        row += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td></tr>';
+        tableRows.push(row);
       });
-    });
+      html = '<div class="table-wrap">' + thead + tableRows.join('') + '</tbody></table></div>';
+    } else {
+      var cardParts = [];
+      sorted.forEach(function (r) {
+        var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
+        var card = '<article class="item-card">';
+        card += '<div class="card-thumb">';
+        if (r.imageUrl) card += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
+        else card += '<span class="card-no-img">—</span>';
+        card += '</div>';
+        card += '<div class="card-main">';
+        card += '<div class="card-title">' + escapeHtml(r.title || '—') + '</div>';
+        card += '<div class="card-item">' + itemCellHtml(r, 'card') + '</div>';
+        card += '</div>';
+        card += '<div class="card-right">';
+        card += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
+        card += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
+        card += '</div>';
+        card += '</article>';
+        cardParts.push(card);
+      });
+      html = '<div class="cards-wrap"><div class="item-cards">' + cardParts.join('') + '</div></div>';
+    }
 
-    tableContainer.addEventListener('click', function (e) {
-      var thumb = e.target && e.target.classList && e.target.classList.contains('item-thumb');
-      if (!thumb || !e.target.src) return;
-      e.preventDefault();
-      openImagePreview(e.target.src);
-    });
+    tableContainer.innerHTML = html;
   }
 
   var modalScrollY = 0;
-
-  function getScrollbarWidth() {
-    return window.innerWidth - document.documentElement.clientWidth;
-  }
 
   function openImagePreview(src) {
     var overlay = document.getElementById('image-preview');
     var img = document.getElementById('image-preview-img');
     if (!overlay || !img) return;
     modalScrollY = window.scrollY;
-    var scrollbarWidth = getScrollbarWidth();
-    document.documentElement.style.minHeight = document.documentElement.scrollHeight + 'px';
-    document.body.style.position = 'fixed';
-    document.body.style.top = -modalScrollY + 'px';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.width = '100%';
-    if (scrollbarWidth) document.body.style.paddingRight = scrollbarWidth + 'px';
+    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    var doc = document.documentElement;
+    doc.style.setProperty('--modal-scroll-y', -modalScrollY + 'px');
+    doc.style.setProperty('--scrollbar-width', scrollbarWidth + 'px');
+    doc.style.setProperty('--modal-doc-height', doc.scrollHeight + 'px');
+    document.body.classList.add('image-preview-open');
     img.src = src;
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
@@ -230,13 +217,11 @@
     overlay.setAttribute('aria-hidden', 'true');
     setTimeout(function () {
       img.removeAttribute('src');
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.documentElement.style.minHeight = '';
+      document.body.classList.remove('image-preview-open');
+      var doc = document.documentElement;
+      doc.style.removeProperty('--modal-scroll-y');
+      doc.style.removeProperty('--scrollbar-width');
+      doc.style.removeProperty('--modal-doc-height');
       window.scrollTo(0, modalScrollY);
     }, 250);
   }
@@ -247,9 +232,6 @@
     if (overlay) {
       overlay.addEventListener('click', function (e) {
         if (e.target === overlay) closeImagePreview();
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeImagePreview();
       });
     }
     if (closeBtn) closeBtn.addEventListener('click', closeImagePreview);
@@ -372,7 +354,15 @@
     saveExcludeToStorage();
     onFilterChange();
   });
-  if (searchInput) searchInput.addEventListener('input', onFilterChange);
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      if (searchInputTimeout) clearTimeout(searchInputTimeout);
+      searchInputTimeout = setTimeout(function () {
+        searchInputTimeout = null;
+        onFilterChange();
+      }, SEARCH_DEBOUNCE_MS);
+    });
+  }
 
   function closeFilterDropdown() {
     if (!filterDropdown || !filterToggle) return;
@@ -411,10 +401,14 @@
       if (filterToggle.contains(e.target) || filterDropdown.contains(e.target)) return;
       closeFilterDropdown();
     });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeFilterDropdown();
-    });
   }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var overlay = document.getElementById('image-preview');
+    if (overlay && overlay.classList.contains('is-open')) closeImagePreview();
+    else if (filterDropdown && filterDropdown.classList.contains('is-open')) closeFilterDropdown();
+  });
 
   if (sortModeSelect) {
     sortModeSelect.addEventListener('change', function () {
@@ -429,33 +423,74 @@
     });
   }
 
+  if (tableContainer) {
+    tableContainer.addEventListener('click', function (e) {
+      var sortTh = e.target && e.target.closest && e.target.closest('th[data-sort]');
+      if (sortTh) {
+        var k = sortTh.getAttribute('data-sort');
+        if (sortKey === k) sortAsc = !sortAsc;
+        else { sortKey = k; sortAsc = true; }
+        renderTable(applyFilters());
+        return;
+      }
+      if (e.target && e.target.classList && e.target.classList.contains('item-thumb') && e.target.src) {
+        e.preventDefault();
+        openImagePreview(e.target.src);
+      }
+    });
+  }
+
+  if (mediaTable) {
+    mediaTable.addEventListener('change', function () {
+      useTableView = mediaTable.matches;
+      renderTable(applyFilters());
+    });
+  }
+
   (function initCountRowStuck() {
     var countRow = document.getElementById('count-row');
     if (!countRow) return;
     var scrollDownPeak = 0;
     var SCROLL_UP_THRESHOLD = 40;
+    var STUCK_THROTTLE_MS = 100;
+    var stuckRaf = null;
+    var stuckLastRun = 0;
     function updateStuck() {
       var top = countRow.getBoundingClientRect().top;
       var scrollY = window.scrollY || document.documentElement.scrollTop;
       var isStuck = top <= 0;
       if (isStuck) {
-        countRow.classList.add('count-row-is-stuck');
-        document.body.classList.add('sticky-search-engaged');
+        if (!countRow.classList.contains('count-row-is-stuck')) countRow.classList.add('count-row-is-stuck');
+        if (!document.body.classList.contains('sticky-search-engaged')) document.body.classList.add('sticky-search-engaged');
         scrollDownPeak = Math.max(scrollDownPeak, scrollY);
         if (scrollY <= scrollDownPeak - SCROLL_UP_THRESHOLD) {
-          document.body.classList.add('scroll-to-top-visible');
+          if (!document.body.classList.contains('scroll-to-top-visible')) document.body.classList.add('scroll-to-top-visible');
         } else {
-          document.body.classList.remove('scroll-to-top-visible');
+          if (document.body.classList.contains('scroll-to-top-visible')) document.body.classList.remove('scroll-to-top-visible');
         }
       } else {
-        countRow.classList.remove('count-row-is-stuck');
-        document.body.classList.remove('sticky-search-engaged');
-        document.body.classList.remove('scroll-to-top-visible');
+        if (countRow.classList.contains('count-row-is-stuck')) countRow.classList.remove('count-row-is-stuck');
+        if (document.body.classList.contains('sticky-search-engaged')) document.body.classList.remove('sticky-search-engaged');
+        if (document.body.classList.contains('scroll-to-top-visible')) document.body.classList.remove('scroll-to-top-visible');
         scrollDownPeak = 0;
       }
     }
-    window.addEventListener('scroll', updateStuck, { passive: true });
-    window.addEventListener('resize', updateStuck);
+    function throttledStuck() {
+      var now = Date.now();
+      if (stuckRaf) return;
+      if (now - stuckLastRun >= STUCK_THROTTLE_MS) {
+        stuckLastRun = now;
+        updateStuck();
+      } else {
+        stuckRaf = requestAnimationFrame(function () {
+          stuckRaf = null;
+          stuckLastRun = Date.now();
+          updateStuck();
+        });
+      }
+    }
+    window.addEventListener('scroll', throttledStuck, { passive: true });
+    window.addEventListener('resize', throttledStuck);
     updateStuck();
   })();
 

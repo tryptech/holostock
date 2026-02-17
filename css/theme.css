@@ -26,12 +26,11 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
   --header-bg: var(--brand-white);
   --header-border: #e6e9ee;
-  /* Accent bar: same role in both themes – blue background, white text */
   --accent-bg: var(--brand-primary-deep);
   --accent-text: var(--brand-white);
 }
 
-/* Auto: follow system preference */
+/* Light theme (default and system light) */
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f0f3f6;
@@ -84,7 +83,7 @@
   }
 }
 
-/* Forced light theme (shop-style) */
+/* Forced light theme (overrides system) */
 [data-theme="light"] {
   --bg: #f0f3f6;
   --text: #1c1e22;
@@ -109,7 +108,7 @@
   --header-border: var(--border-subtle);
 }
 
-/* Forced dark theme */
+/* Forced dark theme (overrides system) */
 [data-theme="dark"] {
   --bg: #141619;
   --text: #e6e8ec;
