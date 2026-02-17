@@ -12,7 +12,6 @@ on:
 
 jobs:
   update:
-    id: pages
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,7 +44,6 @@ jobs:
           path: .
 
   deploy:
-    id: deploy
     needs: update
     runs-on: ubuntu-latest
     permissions:
