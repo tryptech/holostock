@@ -783,33 +783,15 @@ a:focus-visible {
     -webkit-box-orient: vertical;
   }
 
-  .card-link {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.15rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: 0;
+  .card-item .card-link {
     color: var(--link);
     text-decoration: none;
-    font-size: 0.875rem;
-    transition: background var(--transition), color var(--transition);
+    transition: color var(--transition);
   }
 
-  .card-link:hover {
-    background: var(--bg-hover);
+  .card-item .card-link:hover {
     color: var(--link-hover);
-    text-decoration: none;
-  }
-
-  .card-link .card-price {
-    font-weight: 500;
-  }
-
-  .card-link .card-stock {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+    text-decoration: underline;
   }
 
   .card-right {
@@ -820,6 +802,10 @@ a:focus-visible {
     gap: 0.15rem;
     padding: 0.35rem 0.5rem;
     font-size: 0.9rem;
+  }
+
+  .card-right .card-price {
+    font-weight: 500;
   }
 
   .card-right .card-stock {

@@ -160,24 +160,19 @@
       (function () {
         var itemStr = r.item || '—';
         var slashIdx = itemStr.indexOf('/');
+        var openLink = r.productUrl ? ('<a href="' + escapeHtml(r.productUrl) + '" class="card-link" target="_blank" rel="noopener">') : '';
+        var closeLink = r.productUrl ? '</a>' : '';
         if (slashIdx === -1) {
-          cardsHtml += '<div class="card-item"><span class="card-item-after">' + escapeHtml(itemStr) + '</span></div>';
+          cardsHtml += '<div class="card-item">' + openLink + '<span class="card-item-after">' + escapeHtml(itemStr) + '</span>' + closeLink + '</div>';
         } else {
-          cardsHtml += '<div class="card-item"><span class="card-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="card-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span></div>';
+          cardsHtml += '<div class="card-item">' + openLink + '<span class="card-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="card-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>' + closeLink + '</div>';
         }
       })();
       cardsHtml += '</div>';
-      if (r.productUrl) {
-        cardsHtml += '<a href="' + escapeHtml(r.productUrl) + '" class="card-link" target="_blank" rel="noopener">';
-        cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
-        cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
-        cardsHtml += '</a>';
-      } else {
-        cardsHtml += '<div class="card-right">';
-        cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
-        cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
-        cardsHtml += '</div>';
-      }
+      cardsHtml += '<div class="card-right">';
+      cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
+      cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
+      cardsHtml += '</div>';
       cardsHtml += '</article>';
     });
 
