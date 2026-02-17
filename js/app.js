@@ -117,7 +117,17 @@
       var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
       tableHtml += '<tr>';
       tableHtml += '<td>' + escapeHtml(r.title || '—') + '</td>';
-      tableHtml += '<td>' + escapeHtml(r.item || '—') + '</td>';
+      tableHtml += '<td class="cell-item">';
+      (function () {
+        var itemStr = r.item || '—';
+        var slashIdx = itemStr.indexOf('/');
+        if (slashIdx === -1) {
+          tableHtml += '<span class="cell-item-after">' + escapeHtml(itemStr) + '</span>';
+        } else {
+          tableHtml += '<span class="cell-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="cell-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>';
+        }
+      })();
+      tableHtml += '</td>';
       tableHtml += '<td class="cell-image">';
       if (r.imageUrl) tableHtml += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
       else tableHtml += '—';
@@ -137,7 +147,15 @@
       cardsHtml += '</div>';
       cardsHtml += '<div class="card-main">';
       cardsHtml += '<div class="card-title">' + escapeHtml(r.title || '—') + '</div>';
-      cardsHtml += '<div class="card-item">' + escapeHtml(r.item || '—') + '</div>';
+      (function () {
+        var itemStr = r.item || '—';
+        var slashIdx = itemStr.indexOf('/');
+        if (slashIdx === -1) {
+          cardsHtml += '<div class="card-item"><span class="card-item-after">' + escapeHtml(itemStr) + '</span></div>';
+        } else {
+          cardsHtml += '<div class="card-item"><span class="card-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="card-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span></div>';
+        }
+      })();
       cardsHtml += '</div>';
       if (r.productUrl) {
         cardsHtml += '<a href="' + escapeHtml(r.productUrl) + '" class="card-link" target="_blank" rel="noopener">';
