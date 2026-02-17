@@ -262,10 +262,16 @@ function buildVariantRows(product) {
     if ((v?.price ?? 0) <= 0) continue;
     const itemTypeVal = getItemType(product, v);
     const variantLabel = getVariantLabel(product, v);
+    const rawStock = v?.available;
+    const stockUnlimited = rawStock === UNLIMITED_SENTINEL;
+    const stock = stockUnlimited ? null : (rawStock != null ? rawStock : null);
+    const stockDisplay = stockUnlimited ? 'Unlimited' : (stock != null ? String(stock) : '—');
     rows.push({
       title,
       item: variantLabel,
       price: formatPrice(v.price),
+      stock,
+      stockDisplay,
       productUrl: productUrl || undefined,
       talent,
       itemType: itemTypeVal,

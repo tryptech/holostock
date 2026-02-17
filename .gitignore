@@ -6,3 +6,4 @@ data/*-in-stock-table.md
 data/*-in-stock-table.html
 
 *.code-workspace
+/data/items.json

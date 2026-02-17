@@ -83,6 +83,11 @@
         vb = parseDate(vb);
         return asc ? va - vb : vb - va;
       }
+      if (key === 'stock') {
+        va = a.stock != null ? a.stock : Infinity;
+        vb = b.stock != null ? b.stock : Infinity;
+        return asc ? va - vb : vb - va;
+      }
       va = String(va || '');
       vb = String(vb || '');
       const c = va.localeCompare(vb, undefined, { sensitivity: 'base' });
@@ -99,6 +104,7 @@
       '<th data-sort="title">Title <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+      '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th>Product</th></tr></thead><tbody>';
 
@@ -107,6 +113,7 @@
       html += '<td>' + escapeHtml(r.title || '—') + '</td>';
       html += '<td>' + escapeHtml(r.item || '—') + '</td>';
       html += '<td>' + escapeHtml(r.price || '—') + '</td>';
+      html += '<td>' + escapeHtml(r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—')) + '</td>';
       html += '<td>' + escapeHtml(r.date || '—') + '</td>';
       html += '<td>';
       if (r.productUrl) html += '<a href="' + escapeHtml(r.productUrl) + '" target="_blank" rel="noopener">View</a>';
