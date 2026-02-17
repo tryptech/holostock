@@ -27,41 +27,50 @@
     </div>
   </div>
   <p class="subheading">Data is updated every hour and may not be 100% accurate. <span id="last-updated" class="last-updated"></span></p>
-  <div class="filters-accordion">
-    <details class="filters-details" open>
-      <summary class="filters-summary">Filters</summary>
-      <div class="filters">
-        <div class="filter-group">
-          <label for="filter-talent">Talent</label>
-          <select id="filter-talent">
-            <option value="">All</option>
-          </select>
-        </div>
-        <div class="filter-checkbox-row">
-          <div class="filter-group filter-checkbox">
-            <label><input type="checkbox" id="exclude-digital" checked /> Exclude digital</label>
+  <div id="count-row" class="count-row">
+    <div class="search-bar-wrap">
+      <div class="search-wrap">
+        <input type="search" id="search-input" class="search-input" placeholder="Search…" aria-label="Search table">
+      </div>
+      <button type="button" id="filter-toggle" class="filter-toggle" aria-label="Filters" aria-expanded="false" aria-haspopup="true">
+        <svg class="filter-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+      </button>
+      <div id="filter-dropdown" class="filter-dropdown" role="dialog" aria-label="Filters" hidden>
+        <div class="filters">
+          <div class="filter-group">
+            <label for="filter-talent">Talent</label>
+            <select id="filter-talent">
+              <option value="">All</option>
+            </select>
           </div>
-          <div class="filter-group filter-checkbox">
-            <label><input type="checkbox" id="exclude-preorder" checked /> Exclude preorder</label>
+          <div class="filter-checkbox-row">
+            <div class="filter-group filter-checkbox">
+              <label><input type="checkbox" id="exclude-digital" checked /> Exclude digital</label>
+            </div>
+            <div class="filter-group filter-checkbox">
+              <label><input type="checkbox" id="exclude-preorder" checked /> Exclude preorder</label>
+            </div>
           </div>
         </div>
       </div>
-    </details>
-  </div>
-  <div class="count-row">
-    <div class="count" id="count"></div>
-    <div class="sort-dropdown-wrap">
-      <label for="sort-mode" class="sort-dropdown-label">Sort</label>
-      <select id="sort-mode" class="sort-dropdown" aria-label="Sort order">
-        <option value="title_asc">Name A–Z</option>
-        <option value="title_desc">Name Z–A</option>
-        <option value="date_desc">Date newest</option>
-        <option value="date_asc">Date oldest</option>
-        <option value="price_asc">Price low–high</option>
-        <option value="price_desc">Price high–low</option>
-        <option value="stock_asc">Quantity low–high</option>
-        <option value="stock_desc">Quantity high–low</option>
-      </select>
+    </div>
+    <div class="count-row-bottom">
+      <div class="count" id="count"></div>
+      <div class="sort-dropdown-wrap">
+        <label for="sort-mode" class="sort-dropdown-label">Sort</label>
+        <select id="sort-mode" class="sort-dropdown" aria-label="Sort order">
+          <option value="title_asc">Name A–Z</option>
+          <option value="title_desc">Name Z–A</option>
+          <option value="date_desc">Date newest</option>
+          <option value="date_asc">Date oldest</option>
+          <option value="price_asc">Price low–high</option>
+          <option value="price_desc">Price high–low</option>
+          <option value="stock_asc">Quantity low–high</option>
+          <option value="stock_desc">Quantity high–low</option>
+        </select>
+      </div>
     </div>
   </div>
   <div id="table-container">

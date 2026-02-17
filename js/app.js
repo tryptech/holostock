@@ -6,11 +6,16 @@
   const excludeDigital = document.getElementById('exclude-digital');
   const excludePreorder = document.getElementById('exclude-preorder');
   const sortModeSelect = document.getElementById('sort-mode');
+  const searchInput = document.getElementById('search-input');
+  const filterToggle = document.getElementById('filter-toggle');
+  const filterDropdown = document.getElementById('filter-dropdown');
 
   let allItems = [];
   let talentSearchTerms = {};
   let sortKey = 'date';
   let sortAsc = false;
+  let urlReplaceTimeout = null;
+  const URL_PARAM_DEBOUNCE_MS = 100;
 
   function escapeHtml(s) {
     const div = document.createElement('div');
@@ -55,15 +60,25 @@
     return /\bvoice\b|ボイス/i.test(text);
   }
 
+  function rowMatchesSearch(row, q) {
+    if (!q) return true;
+    var title = row.title || '';
+    var item = row.item || '';
+    var talent = row.talent || '';
+    return textContains(title, q) || textContains(item, q) || textContains(talent, q);
+  }
+
   function applyFilters() {
     const talentVal = (filterTalent.value || '').trim();
     const hideDigital = excludeDigital.checked;
     const hidePreorder = excludePreorder.checked;
+    const searchQ = (searchInput && searchInput.value || '').trim();
 
     return allItems.filter(function (row) {
       if (hideDigital && (row.isDigital || isDigitalVoiceContent(row))) return false;
       if (hidePreorder && row.isPreorder) return false;
       if (talentVal && !rowMatchesTalent(row, talentVal, talentSearchTerms[talentVal])) return false;
+      if (searchQ && !rowMatchesSearch(row, searchQ)) return false;
       return true;
     });
   }
@@ -303,8 +318,59 @@
     } catch (e) {}
   }
 
+  function getParamsFromUrl() {
+    var params = {};
+    try {
+      var search = window.location.search;
+      if (!search) return params;
+      var p = new URLSearchParams(search);
+      if (p.has('q')) params.q = decodeURIComponent(p.get('q')).trim();
+      if (p.has('talent')) params.talent = decodeURIComponent(p.get('talent')).trim();
+      if (p.has('digital')) { var d = p.get('digital'); params.digital = d === '1' || d === 'true'; }
+      if (p.has('preorder')) { var pr = p.get('preorder'); params.preorder = pr === '1' || pr === 'true'; }
+    } catch (e) {}
+    return params;
+  }
+
+  function loadParamsFromUrl() {
+    var params = getParamsFromUrl();
+    if (params.q != null && searchInput) searchInput.value = params.q;
+    if (params.talent != null && filterTalent) {
+      var opt = Array.prototype.find.call(filterTalent.options, function (o) { return o.value === params.talent; });
+      if (opt) filterTalent.value = params.talent;
+    }
+    if (params.digital != null && excludeDigital) excludeDigital.checked = params.digital;
+    if (params.preorder != null && excludePreorder) excludePreorder.checked = params.preorder;
+  }
+
+  function buildUrlFromState() {
+    var q = (searchInput && searchInput.value || '').trim();
+    var talent = (filterTalent && filterTalent.value || '').trim();
+    var digital = excludeDigital && excludeDigital.checked;
+    var preorder = excludePreorder && excludePreorder.checked;
+    var p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (talent) p.set('talent', talent);
+    p.set('digital', digital ? '1' : '0');
+    p.set('preorder', preorder ? '1' : '0');
+    var search = p.toString();
+    return search ? window.location.pathname + '?' + search : window.location.pathname;
+  }
+
+  function replaceUrlFromStateDebounced() {
+    if (urlReplaceTimeout) clearTimeout(urlReplaceTimeout);
+    urlReplaceTimeout = setTimeout(function () {
+      urlReplaceTimeout = null;
+      var url = buildUrlFromState();
+      if (url !== window.location.pathname + window.location.search) {
+        window.history.replaceState(null, '', url);
+      }
+    }, URL_PARAM_DEBOUNCE_MS);
+  }
+
   function onFilterChange() {
     renderTable(applyFilters());
+    replaceUrlFromStateDebounced();
   }
 
   filterTalent.addEventListener('change', onFilterChange);
@@ -316,6 +382,49 @@
     saveExcludeToStorage();
     onFilterChange();
   });
+  if (searchInput) searchInput.addEventListener('input', onFilterChange);
+
+  function closeFilterDropdown() {
+    if (!filterDropdown || !filterToggle) return;
+    filterDropdown.classList.remove('is-open');
+    filterDropdown.setAttribute('hidden', '');
+    filterToggle.setAttribute('aria-expanded', 'false');
+    var countRow = document.getElementById('count-row');
+    if (countRow) countRow.classList.remove('filter-dropdown-open');
+    document.body.classList.remove('filter-dropdown-open');
+  }
+
+  function openFilterDropdown() {
+    if (!filterDropdown || !filterToggle) return;
+    filterDropdown.classList.add('is-open');
+    filterDropdown.removeAttribute('hidden');
+    filterToggle.setAttribute('aria-expanded', 'true');
+    var countRow = document.getElementById('count-row');
+    if (countRow) countRow.classList.add('filter-dropdown-open');
+    document.body.classList.add('filter-dropdown-open');
+  }
+
+  function toggleFilterDropdown() {
+    if (!filterDropdown || !filterToggle) return;
+    var isOpen = filterDropdown.classList.contains('is-open');
+    if (isOpen) closeFilterDropdown();
+    else openFilterDropdown();
+  }
+
+  if (filterToggle && filterDropdown) {
+    filterToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleFilterDropdown();
+    });
+    document.addEventListener('click', function (e) {
+      if (!filterDropdown.classList.contains('is-open')) return;
+      if (filterToggle.contains(e.target) || filterDropdown.contains(e.target)) return;
+      closeFilterDropdown();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeFilterDropdown();
+    });
+  }
 
   if (sortModeSelect) {
     sortModeSelect.addEventListener('change', function () {
@@ -329,6 +438,19 @@
       }
     });
   }
+
+  (function initCountRowStuck() {
+    var countRow = document.getElementById('count-row');
+    if (!countRow) return;
+    function updateStuck() {
+      var top = countRow.getBoundingClientRect().top;
+      if (top <= 0) countRow.classList.add('count-row-is-stuck');
+      else countRow.classList.remove('count-row-is-stuck');
+    }
+    window.addEventListener('scroll', updateStuck, { passive: true });
+    window.addEventListener('resize', updateStuck);
+    updateStuck();
+  })();
 
   (function initThemeToggle() {
     var themeToggle = document.getElementById('theme-toggle');
@@ -396,7 +518,10 @@
     });
     populateFilters();
     loadExcludeFromStorage();
+    loadParamsFromUrl();
     renderTable(applyFilters());
+    var countRow = document.getElementById('count-row');
+    if (countRow) countRow.classList.add('data-loaded');
     var lastEl = document.getElementById('last-updated');
     if (lastEl && data.builtAt) {
       try {
