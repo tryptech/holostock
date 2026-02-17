@@ -1,0 +1,98 @@
+/**
+ * Theme: hololive brand colors and light/dark modes
+ * Brand colors derived from hololive logo (primary cyan, play button blues, accents)
+ */
+
+/* ---------------------------------------------------------------------------
+   Brand palette (from logo)
+   - Primary: vibrant cyan "hololive" text
+   - Sky/aqua: play button main
+   - Periwinkle: play button shadow/outline
+   - Pale: play button highlight
+   - Orange: INDONESIA accent
+   - Lavender: ENGLISH accent
+   --------------------------------------------------------------------------- */
+:root {
+  --brand-primary: #00a8cc;
+  --brand-sky: #90e0ef;
+  --brand-periwinkle: #a8b3cf;
+  --brand-pale: #e0f4ff;
+  --brand-orange: #f97316;
+  --brand-lavender: #c4b5fd;
+  --brand-white: #ffffff;
+}
+
+/* Auto: follow system preference */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f8fa;
+    --text: #1a1a2e;
+    --text-muted: #555;
+    --border: #cbd5e1;
+    --border-subtle: #e2e8f0;
+    --bg-card: var(--brand-white);
+    --bg-card-alt: #f8fafc;
+    --bg-input: var(--brand-white);
+    --bg-hover: #e2e8f0;
+    --link: var(--brand-primary);
+    --link-hover: #0096b4;
+    --error: #b91c1c;
+    --overlay: rgba(0, 0, 0, 0.5);
+    --thumb-bg: var(--brand-pale);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a2e;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #475569;
+    --border-subtle: #334155;
+    --bg-card: #252538;
+    --bg-card-alt: #2d2d44;
+    --bg-input: #334155;
+    --bg-hover: #334155;
+    --link: var(--brand-sky);
+    --link-hover: var(--brand-primary);
+    --error: #f87171;
+    --overlay: rgba(0, 0, 0, 0.85);
+    --thumb-bg: var(--border-subtle);
+  }
+}
+
+/* Forced light theme */
+[data-theme="light"] {
+  --bg: #f5f8fa;
+  --text: #1a1a2e;
+  --text-muted: #555;
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  --bg-card: var(--brand-white);
+  --bg-card-alt: #f8fafc;
+  --bg-input: var(--brand-white);
+  --bg-hover: #e2e8f0;
+  --link: var(--brand-primary);
+  --link-hover: #0096b4;
+  --error: #b91c1c;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --thumb-bg: var(--brand-pale);
+}
+
+/* Forced dark theme */
+[data-theme="dark"] {
+  --bg: #1a1a2e;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #475569;
+  --border-subtle: #334155;
+  --bg-card: #252538;
+  --bg-card-alt: #2d2d44;
+  --bg-input: #334155;
+  --bg-hover: #334155;
+  --link: var(--brand-sky);
+  --link-hover: var(--brand-primary);
+  --error: #f87171;
+  --overlay: rgba(0, 0, 0, 0.85);
+  --thumb-bg: var(--border-subtle);
+}

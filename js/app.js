@@ -5,6 +5,7 @@
   const filterTalent = document.getElementById('filter-talent');
   const excludeDigital = document.getElementById('exclude-digital');
   const excludePreorder = document.getElementById('exclude-preorder');
+  const sortModeSelect = document.getElementById('sort-mode');
 
   let allItems = [];
   let talentSearchTerms = {};
@@ -97,37 +98,65 @@
 
   function renderTable(rows) {
     countEl.textContent = rows.length + ' item(s)';
+    if (sortModeSelect) sortModeSelect.value = sortKey + '_' + (sortAsc ? 'asc' : 'desc');
 
     const sorted = sortRows(rows);
-    let html =
-      '<table><thead><tr>' +
+    let tableHtml =
+      '<table class="items-table"><thead><tr>' +
       '<th data-sort="title">Title <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th class="no-sort">Image</th>' +
       '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th>Product</th></tr></thead><tbody>';
+      '<th class="no-sort">Link</th></tr></thead><tbody>';
+
+    let cardsHtml = '<div class="item-cards">';
 
     sorted.forEach(function (r) {
-      html += '<tr>';
-      html += '<td>' + escapeHtml(r.title || '—') + '</td>';
-      html += '<td>' + escapeHtml(r.item || '—') + '</td>';
-      html += '<td class="cell-image">';
-      if (r.imageUrl) html += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
-      else html += '—';
-      html += '</td>';
-      html += '<td>' + escapeHtml(r.price || '—') + '</td>';
-      html += '<td>' + escapeHtml(r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—')) + '</td>';
-      html += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td>';
-      html += '<td>';
-      if (r.productUrl) html += '<a href="' + escapeHtml(r.productUrl) + '" target="_blank" rel="noopener">View</a>';
-      else html += '—';
-      html += '</td></tr>';
-    });
-    html += '</tbody></table>';
+      var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
+      tableHtml += '<tr>';
+      tableHtml += '<td>' + escapeHtml(r.title || '—') + '</td>';
+      tableHtml += '<td>' + escapeHtml(r.item || '—') + '</td>';
+      tableHtml += '<td class="cell-image">';
+      if (r.imageUrl) tableHtml += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
+      else tableHtml += '—';
+      tableHtml += '</td>';
+      tableHtml += '<td>' + escapeHtml(r.price || '—') + '</td>';
+      tableHtml += '<td>' + escapeHtml(stockStr) + '</td>';
+      tableHtml += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td>';
+      tableHtml += '<td>';
+      if (r.productUrl) tableHtml += '<a href="' + escapeHtml(r.productUrl) + '" target="_blank" rel="noopener">View</a>';
+      else tableHtml += '—';
+      tableHtml += '</td></tr>';
 
-    tableContainer.innerHTML = html;
+      cardsHtml += '<article class="item-card">';
+      cardsHtml += '<div class="card-thumb">';
+      if (r.imageUrl) cardsHtml += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
+      else cardsHtml += '<span class="card-no-img">—</span>';
+      cardsHtml += '</div>';
+      cardsHtml += '<div class="card-main">';
+      cardsHtml += '<div class="card-title">' + escapeHtml(r.title || '—') + '</div>';
+      cardsHtml += '<div class="card-item">' + escapeHtml(r.item || '—') + '</div>';
+      cardsHtml += '</div>';
+      if (r.productUrl) {
+        cardsHtml += '<a href="' + escapeHtml(r.productUrl) + '" class="card-link" target="_blank" rel="noopener">';
+        cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
+        cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
+        cardsHtml += '</a>';
+      } else {
+        cardsHtml += '<div class="card-right">';
+        cardsHtml += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
+        cardsHtml += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
+        cardsHtml += '</div>';
+      }
+      cardsHtml += '</article>';
+    });
+
+    tableHtml += '</tbody></table>';
+    cardsHtml += '</div>';
+
+    tableContainer.innerHTML = '<div class="table-wrap">' + tableHtml + '</div><div class="cards-wrap">' + cardsHtml + '</div>';
 
     tableContainer.querySelectorAll('th[data-sort]').forEach(function (th) {
       th.addEventListener('click', function () {
@@ -235,13 +264,82 @@
     filterTalent.innerHTML = '<option value="">All</option>' + talents.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
   }
 
+  const EXCLUDE_DIGITAL_KEY = 'holostock-exclude-digital';
+  const EXCLUDE_PREORDER_KEY = 'holostock-exclude-preorder';
+
+  function loadExcludeFromStorage() {
+    try {
+      var d = localStorage.getItem(EXCLUDE_DIGITAL_KEY);
+      if (d === 'true' || d === 'false') excludeDigital.checked = d === 'true';
+    } catch (e) {}
+    try {
+      var p = localStorage.getItem(EXCLUDE_PREORDER_KEY);
+      if (p === 'true' || p === 'false') excludePreorder.checked = p === 'true';
+    } catch (e) {}
+  }
+
+  function saveExcludeToStorage() {
+    try {
+      localStorage.setItem(EXCLUDE_DIGITAL_KEY, String(excludeDigital.checked));
+      localStorage.setItem(EXCLUDE_PREORDER_KEY, String(excludePreorder.checked));
+    } catch (e) {}
+  }
+
   function onFilterChange() {
     renderTable(applyFilters());
   }
 
   filterTalent.addEventListener('change', onFilterChange);
-  excludeDigital.addEventListener('change', onFilterChange);
-  excludePreorder.addEventListener('change', onFilterChange);
+  excludeDigital.addEventListener('change', function () {
+    saveExcludeToStorage();
+    onFilterChange();
+  });
+  excludePreorder.addEventListener('change', function () {
+    saveExcludeToStorage();
+    onFilterChange();
+  });
+
+  if (sortModeSelect) {
+    sortModeSelect.addEventListener('change', function () {
+      var v = sortModeSelect.value;
+      if (!v) return;
+      var parts = v.split('_');
+      if (parts.length === 2) {
+        sortKey = parts[0];
+        sortAsc = parts[1] === 'asc';
+        renderTable(applyFilters());
+      }
+    });
+  }
+
+  (function initThemeToggle() {
+    var themeToggle = document.getElementById('theme-toggle');
+    var iconEl = themeToggle && themeToggle.querySelector('.theme-icon');
+    if (!themeToggle || !iconEl) return;
+
+    var icons = {
+      light: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+      dark: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+      auto: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 7a5 5 0 0 0 0 10V7z" fill="currentColor" stroke="none"/></svg>'
+    };
+
+    function setThemeIcon(theme) {
+      theme = theme || 'auto';
+      iconEl.innerHTML = icons[theme] || icons.auto;
+      themeToggle.setAttribute('aria-label', 'Theme: ' + (theme === 'auto' ? 'System' : theme.charAt(0).toUpperCase() + theme.slice(1)));
+    }
+
+    var theme = document.documentElement.dataset.theme || 'auto';
+    setThemeIcon(theme);
+
+    themeToggle.addEventListener('click', function () {
+      var next = (theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light');
+      theme = next;
+      try { localStorage.setItem('holoshop-theme', next); } catch (e) {}
+      document.documentElement.dataset.theme = next;
+      setThemeIcon(next);
+    });
+  })();
 
   function applyTalentMap(items, map) {
     if (!map || typeof map !== 'object') return;
@@ -279,6 +377,7 @@
       if (t && !talentSearchTerms[t]) talentSearchTerms[t] = [t];
     });
     populateFilters();
+    loadExcludeFromStorage();
     renderTable(applyFilters());
     var lastEl = document.getElementById('last-updated');
     if (lastEl && data.builtAt) {
