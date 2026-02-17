@@ -6,6 +6,7 @@
   <title>hololive shop – In-stock items</title>
   <style>
     * { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; }
     body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background: #1a1a1a; color: #e0e0e0; }
     .header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
     h1 { font-size: 1.25rem; margin-top: 0; }
@@ -21,8 +22,19 @@
     table { border-collapse: collapse; width: 100%; background: #222; }
     th, td { border: 1px solid #444; padding: 0.5rem 0.75rem; text-align: left; }
     th { background: #333; cursor: pointer; user-select: none; white-space: nowrap; }
+    th.no-sort { cursor: default; }
     th:hover { background: #404040; }
+    th.no-sort:hover { background: #333; }
     th .sort-indicator { margin-left: 0.25rem; opacity: 0.7; }
+    .cell-date { white-space: nowrap; min-width: 6.5em; }
+    .cell-image { width: 76px; padding: 0.4rem; vertical-align: middle; }
+    .item-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 4px; display: block; background: #333; cursor: pointer; }
+    .image-preview-overlay { display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .image-preview-overlay.is-open { opacity: 1; pointer-events: auto; }
+    .image-preview-overlay .preview-inner { position: relative; max-width: 90vw; max-height: 90vh; }
+    .image-preview-overlay .preview-inner img { max-width: 100%; max-height: 85vh; width: auto; height: auto; object-fit: contain; border-radius: 8px; background: #222; }
+    .image-preview-overlay .preview-close { position: absolute; top: -2.5rem; right: 0; background: #444; color: #e0e0e0; border: 1px solid #666; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    .image-preview-overlay .preview-close:hover { background: #555; }
     tbody tr:nth-child(even) { background: #252525; }
     tbody tr:hover { background: #2d2d2d; }
     a { color: #7eb8da; text-decoration: none; }
@@ -59,6 +71,12 @@
   <div class="count" id="count"></div>
   <div id="table-container">
     <div class="loading" id="loading">Loading…</div>
+  </div>
+  <div id="image-preview" class="image-preview-overlay" aria-hidden="true">
+    <div class="preview-inner">
+      <button type="button" class="preview-close" aria-label="Close">Close</button>
+      <img src="" alt="Preview" id="image-preview-img">
+    </div>
   </div>
   <script src="js/app.js"></script>
 </body>

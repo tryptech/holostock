@@ -266,12 +266,18 @@ function buildVariantRows(product) {
     const stockUnlimited = rawStock === UNLIMITED_SENTINEL;
     const stock = stockUnlimited ? null : (rawStock != null ? rawStock : null);
     const stockDisplay = stockUnlimited ? 'Unlimited' : (stock != null ? String(stock) : '—');
+    const images = product?.images;
+    const imageIndex = v?.imageIndex != null && Array.isArray(images) ? Math.min(v.imageIndex, images.length - 1) : 0;
+    const imageObj = Array.isArray(images) && images[imageIndex] ? images[imageIndex] : images?.[0];
+    let imageUrl = imageObj?.url;
+    if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('//')) imageUrl = 'https:' + imageUrl;
     rows.push({
       title,
       item: variantLabel,
       price: formatPrice(v.price),
       stock,
       stockDisplay,
+      imageUrl: imageUrl || undefined,
       productUrl: productUrl || undefined,
       talent,
       itemType: itemTypeVal,

@@ -103,18 +103,23 @@
       '<table><thead><tr>' +
       '<th data-sort="title">Title <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+      '<th class="no-sort">Image</th>' +
       '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+      '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th>Product</th></tr></thead><tbody>';
 
     sorted.forEach(function (r) {
       html += '<tr>';
       html += '<td>' + escapeHtml(r.title || '—') + '</td>';
       html += '<td>' + escapeHtml(r.item || '—') + '</td>';
+      html += '<td class="cell-image">';
+      if (r.imageUrl) html += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
+      else html += '—';
+      html += '</td>';
       html += '<td>' + escapeHtml(r.price || '—') + '</td>';
       html += '<td>' + escapeHtml(r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—')) + '</td>';
-      html += '<td>' + escapeHtml(r.date || '—') + '</td>';
+      html += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td>';
       html += '<td>';
       if (r.productUrl) html += '<a href="' + escapeHtml(r.productUrl) + '" target="_blank" rel="noopener">View</a>';
       else html += '—';
@@ -132,7 +137,71 @@
         renderTable(applyFilters());
       });
     });
+
+    tableContainer.addEventListener('click', function (e) {
+      var thumb = e.target && e.target.classList && e.target.classList.contains('item-thumb');
+      if (!thumb || !e.target.src) return;
+      e.preventDefault();
+      openImagePreview(e.target.src);
+    });
   }
+
+  var modalScrollY = 0;
+
+  function getScrollbarWidth() {
+    return window.innerWidth - document.documentElement.clientWidth;
+  }
+
+  function openImagePreview(src) {
+    var overlay = document.getElementById('image-preview');
+    var img = document.getElementById('image-preview-img');
+    if (!overlay || !img) return;
+    modalScrollY = window.scrollY;
+    var scrollbarWidth = getScrollbarWidth();
+    document.documentElement.style.minHeight = document.documentElement.scrollHeight + 'px';
+    document.body.style.position = 'fixed';
+    document.body.style.top = -modalScrollY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    if (scrollbarWidth) document.body.style.paddingRight = scrollbarWidth + 'px';
+    img.src = src;
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeImagePreview() {
+    var overlay = document.getElementById('image-preview');
+    var img = document.getElementById('image-preview-img');
+    if (!overlay || !img) return;
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    setTimeout(function () {
+      img.removeAttribute('src');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.minHeight = '';
+      window.scrollTo(0, modalScrollY);
+    }, 250);
+  }
+
+  (function setupImagePreview() {
+    var overlay = document.getElementById('image-preview');
+    var closeBtn = overlay && overlay.querySelector('.preview-close');
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeImagePreview();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeImagePreview();
+      });
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeImagePreview);
+  })();
 
   function titleCase(s) {
     return (s || '').trim().split(/\s+/).map(function (w) {
