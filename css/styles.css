@@ -764,3 +764,41 @@ a:hover {
     background: var(--bg-card-alt);
   }
 }
+
+/* Scroll to top button – shown when sticky search bar is engaged */
+.scroll-to-top {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+  right: max(1.5rem, env(safe-area-inset-right, 0px));
+  z-index: 100;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+}
+
+body.scroll-to-top-visible .scroll-to-top {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scroll-to-top:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.scroll-to-top:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--link);
+}
