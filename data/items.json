@@ -60217,18 +60217,6 @@
       "isPreorder": false
     },
     {
-      "title": "hololive friends with u Watson Amelia",
-      "item": "グッズ / Watson Amelia",
-      "price": "$25",
-      "productUrl": "https://shop.hololivepro.com/en/products/hololivefriendswithu_watsonamelia",
-      "talent": "Watson Amelia",
-      "itemType": "グッズ",
-      "date": "2024-04-03",
-      "dateRaw": "2024-04-03T09:03:12.0000000Z",
-      "isDigital": false,
-      "isPreorder": false
-    },
-    {
       "title": "hololive friends with u Vestia Zeta",
       "item": "グッズ / Vestia Zeta",
       "price": "$25",
@@ -80545,5 +80533,5 @@
       "isPreorder": false
     }
   ],
-  "builtAt": "2026-02-16T23:10:38Z"
+  "builtAt": "2026-02-17T00:30:30Z"
 }
