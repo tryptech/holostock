@@ -1,4 +1,4 @@
-# Fetch hololive shop catalog, build in-stock table, deploy site (with data) via Pages artifact.
+# Fetch shop catalog, build in-stock table, deploy site (with data) via Pages artifact.
 # Runs on push to main and every hour.
 # Only this workflow should deploy to Pages; disable any other "pages build and deployment" workflow.
 name: Update catalog

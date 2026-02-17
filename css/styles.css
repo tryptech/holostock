@@ -12,26 +12,40 @@ html {
 }
 
 body {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 0;
   padding: 1rem;
   background: var(--bg);
   color: var(--text);
+  min-height: 100vh;
 }
 
-/* Header */
+/* Header – full-bleed bar, color delineation */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--header-bg);
+  box-shadow: var(--shadow-sm);
 }
 
 .header h1 {
-  font-size: 1.75rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   margin: 0;
   line-height: 1.2;
+  color: var(--text);
+}
+
+.header h1::first-letter {
+  color: var(--link);
 }
 
 .header-actions {
@@ -42,21 +56,27 @@ body {
 }
 
 .theme-toggle {
-  padding: 0;
+  padding: 0.35rem;
   margin: 0;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: color var(--transition), background var(--transition);
 }
 
 .theme-toggle:hover {
   color: var(--text);
   background: var(--bg-hover);
+}
+
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .theme-toggle-icon {
@@ -79,21 +99,28 @@ body {
 .header a.github-icon {
   display: inline-flex;
   color: var(--text-muted);
-  padding: 0.25rem;
-  border-radius: 4px;
+  padding: 0.35rem;
+  border-radius: 0;
+  transition: color var(--transition), background var(--transition);
 }
 
 .header a.github-icon:hover {
-  color: var(--text);
+  color: var(--link);
   background: var(--bg-hover);
   text-decoration: none;
+}
+
+.header a.github-icon:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* Subheading & count */
 .subheading {
   color: var(--text-muted);
-  font-size: 0.9rem;
-  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.45;
 }
 
 .last-updated {
@@ -114,11 +141,10 @@ body {
   gap: 0.75rem;
   margin-bottom: 0;
   flex-wrap: wrap;
-  background: var(--bg-hover);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  padding: 0.5rem 0.75rem;
+  background: var(--accent-bg);
+  border-radius: 0;
+  padding: 0.625rem 0.875rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .count-row.filter-dropdown-open {
@@ -131,10 +157,10 @@ body {
   min-width: 0;
   display: flex;
   align-items: stretch;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: var(--bg-input);
+  border-radius: 0;
   overflow: visible;
+  transition: box-shadow var(--transition);
 }
 
 .search-bar-wrap .search-wrap {
@@ -158,7 +184,7 @@ body {
 }
 
 .search-bar-wrap:focus-within {
-  box-shadow: 0 0 0 2px var(--border-subtle);
+  box-shadow: var(--focus-ring);
 }
 
 .search-bar-wrap .filter-toggle {
@@ -169,21 +195,26 @@ body {
   width: 2.75rem;
   padding: 0 0.5rem;
   border: none;
-  border-left: 1px solid var(--border);
   border-radius: 0;
   background: var(--bg-card);
-  color: var(--text-muted);
+  color: var(--link);
   cursor: pointer;
+  transition: background var(--transition), color var(--transition);
 }
 
 .search-bar-wrap .filter-toggle:hover {
-  color: var(--text);
+  color: var(--link);
   background: var(--bg-hover);
 }
 
 .search-bar-wrap .filter-toggle[aria-expanded="true"] {
-  background: var(--bg-hover);
-  color: var(--text);
+  background: var(--link);
+  color: var(--brand-white);
+}
+
+.search-bar-wrap .filter-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .filter-icon {
@@ -193,15 +224,13 @@ body {
 .filter-dropdown {
   position: absolute;
   top: 100%;
-  left: -1px;
-  right: -1px;
+  left: 0;
+  right: 0;
   margin-top: 0;
   padding: 1rem;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 0;
+  box-shadow: var(--shadow-md);
   z-index: 1;
   display: none;
 }
@@ -231,8 +260,9 @@ body {
 }
 
 .count {
-  color: var(--text-muted);
+  color: var(--accent-text);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .sort-dropdown-wrap {
@@ -245,14 +275,25 @@ body {
   margin-right: 0.5rem;
 }
 
+.count-row .sort-dropdown-label {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
 .sort-dropdown {
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   min-width: 140px;
   background: var(--bg-input);
-  border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border-radius: 0;
+  font-size: 0.875rem;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  transition: box-shadow var(--transition);
+}
+
+.sort-dropdown:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* Filters (inside dropdown) */
@@ -287,12 +328,19 @@ body {
 
 .filter-group input,
 .filter-group select {
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   min-width: 160px;
   background: var(--bg-input);
-  border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 4px;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  transition: box-shadow var(--transition);
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .filter-group input::placeholder {
@@ -312,49 +360,49 @@ body {
 .filter-checkbox input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 2rem;
-  height: 2rem;
+  width: 1.25rem;
+  height: 1.25rem;
   min-width: 0;
   margin: 0;
   padding: 0;
   flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg-input);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
   cursor: pointer;
   position: relative;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
 .filter-checkbox input[type="checkbox"]:hover {
-  border-color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--text-muted);
 }
 
 .filter-checkbox input[type="checkbox"]:checked {
   background: var(--link);
-  border-color: var(--link);
+  box-shadow: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 6l3 3 5-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 1.125rem;
+  background-size: 0.75rem;
 }
 
 .filter-checkbox input[type="checkbox"]:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--link);
+  box-shadow: var(--focus-ring);
 }
 
 .filter-checkbox input[type="checkbox"]:focus:not(:focus-visible) {
   box-shadow: none;
 }
 
-/* Table - no overflow on wrapper so thead th sticky works relative to viewport */
+/* Table – card-style container, color delineation */
 .table-wrap {
   display: block;
   max-width: 100%;
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
+  border-radius: 0;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .cards-wrap {
@@ -369,17 +417,23 @@ table {
 
 th,
 td {
-  border: 1px solid var(--border);
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   text-align: left;
   vertical-align: middle;
+  border: none;
 }
 
 th {
-  background: var(--bg-hover);
+  background: transparent;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 /* Sticky header when scrolling the page */
@@ -387,8 +441,9 @@ thead th {
   position: sticky;
   top: 3rem;
   z-index: 100;
-  background: var(--bg-hover);
-  box-shadow: 0 1px 0 0 var(--border), 0 4px 6px -2px var(--bg-card);
+  background: var(--accent-bg);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-sm);
 }
 
 body.filter-dropdown-open thead th {
@@ -399,25 +454,21 @@ th.no-sort {
   cursor: default;
 }
 
-th:hover {
-  background: var(--border);
-}
-
-th.no-sort:hover {
-  background: var(--bg-hover);
+th:hover:not(.no-sort) {
+  color: var(--link);
 }
 
 th .sort-indicator {
-  margin-left: 0.25rem;
-  opacity: 0.7;
+  margin-left: 0.35rem;
+  opacity: 0.6;
 }
 
 .cell-title {
-  max-width: 12em;
+  max-width: 30em;
 }
 
 .cell-item {
-  min-width: 22em;
+  min-width: 24em;
 }
 
 .cell-date {
@@ -434,6 +485,7 @@ th .sort-indicator {
   color: inherit;
   text-decoration: none;
   cursor: pointer;
+  transition: color var(--transition);
 }
 
 .cell-item-link:hover {
@@ -462,10 +514,19 @@ th .sort-indicator {
   width: 64px;
   height: 64px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 0;
   display: block;
   background: var(--thumb-bg);
   cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+
+.item-thumb:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+tbody tr {
+  background: var(--bg-card);
 }
 
 tbody tr:nth-child(even) {
@@ -480,10 +541,17 @@ tbody tr:hover {
 a {
   color: var(--link);
   text-decoration: none;
+  transition: color var(--transition);
 }
 
 a:hover {
   color: var(--link-hover);
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
   text-decoration: underline;
 }
 
@@ -530,25 +598,33 @@ a:hover {
   width: auto;
   height: auto;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
 }
 
 .image-preview-overlay .preview-close {
   position: absolute;
   top: -2.5rem;
   right: 0;
-  background: var(--border);
+  background: var(--bg-card);
   color: var(--text);
-  border: 1px solid var(--border-subtle);
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), color var(--transition);
 }
 
 .image-preview-overlay .preview-close:hover {
   background: var(--bg-hover);
+  color: var(--link);
+}
+
+.image-preview-overlay .preview-close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* ---------------------------------------------------------------------------
@@ -565,17 +641,13 @@ a:hover {
     padding-left: 1rem;
     padding-right: 1rem;
     border-radius: 0;
-    border-left: none;
-    border-right: none;
-    box-shadow: 0 1px 0 0 var(--border-subtle);
+    box-shadow: var(--shadow-sm);
   }
 
   .count-row .search-bar-wrap {
     flex: none;
     width: 100%;
     border-radius: 0;
-    border-left: none;
-    border-right: none;
   }
 
   .count-row .filter-dropdown {
@@ -585,7 +657,7 @@ a:hover {
   }
 
   .count-row.count-row-is-stuck {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 0 0 var(--border-subtle);
+    box-shadow: var(--shadow-md);
   }
 
   .count-row .count-row-bottom {
@@ -627,11 +699,16 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.6rem;
+    padding: 0.625rem;
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 0;
     min-width: 0;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition);
+  }
+
+  .item-card:hover {
+    box-shadow: var(--shadow-md);
   }
 
   .item-card:nth-child(4n+2),
@@ -647,7 +724,7 @@ a:hover {
     width: 56px;
     height: 56px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 0;
     background: var(--thumb-bg);
   }
 
@@ -658,9 +735,9 @@ a:hover {
     align-items: center;
     justify-content: center;
     background: var(--thumb-bg);
-    border-radius: 4px;
+    border-radius: 0;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   .card-main {
@@ -701,6 +778,7 @@ a:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
@@ -711,15 +789,17 @@ a:hover {
     flex-direction: column;
     align-items: flex-end;
     gap: 0.15rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0;
     color: var(--link);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    transition: background var(--transition), color var(--transition);
   }
 
   .card-link:hover {
     background: var(--bg-hover);
+    color: var(--link-hover);
     text-decoration: none;
   }
 
@@ -770,8 +850,6 @@ a:hover {
   .item-card {
     padding: 0.5rem 1rem;
     border-radius: 0;
-    border-left: none;
-    border-right: none;
   }
 
   .item-card:nth-child(4n+2),
@@ -793,18 +871,18 @@ a:hover {
   width: 3rem;
   height: 3rem;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 50%;
+  border: none;
+  border-radius: 0;
   background: var(--bg-card);
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+  transition: opacity var(--transition), color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
 body.scroll-to-top-visible .scroll-to-top {
@@ -813,11 +891,12 @@ body.scroll-to-top-visible .scroll-to-top {
 }
 
 .scroll-to-top:hover {
-  background: var(--bg-hover);
-  color: var(--text);
+  background: var(--link);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-lg);
 }
 
-.scroll-to-top:focus {
+.scroll-to-top:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--link);
+  box-shadow: var(--focus-ring);
 }

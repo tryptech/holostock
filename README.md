@@ -1,6 +1,6 @@
 # holoshop-instock
 
-Static SPA that lists in-stock items from the Hotyon hololive shop. **Live demo:** [tryp.tech/holoshop-instock/](https://tryp.tech/holoshop-instock/) Filter by talent (with Japanese/English name matching in title and item), exclude digital items and preorders, sort by title/item/price/date. Data is built by a Node pipeline and updated automatically every hour via GitHub Actions.
+Static SPA that lists in-stock items from the official shop. **Live demo:** [tryp.tech/holoshop-instock/](https://tryp.tech/holoshop-instock/) Filter by talent (with Japanese/English name matching in title and item), exclude digital items and preorders, sort by title/item/price/date. Data is built by a Node pipeline and updated automatically every hour via GitHub Actions.
 
 ## Features
 
@@ -63,4 +63,4 @@ No secrets required; the workflow uses the Hotyon API key in the script. To run 
 ## Pipeline details
 
 - **fetch-full-catalog.js** – Paginates the Hotyon search API, writes full catalog and in-stock/out-of-stock JSON under `data/`.
-- **build-in-stock-table.js** – Reads in-stock catalog, keeps paid variants, builds one row per variant with title, item, price, product URL, talent (using a built-in JP→EN map), item type, date, and `isDigital` / `isPreorder`. Writes `items.json` (with `builtAt`), `talent-jp-to-en.json`, and `talent-search-terms.json` (per-talent EN + JP strings for filtering by title/item). The JP→EN map in the script is a full list of hololive and HOLOSTARS talents (and selected alumni) so tags and vendor names normalize to a single English display name.
+- **build-in-stock-table.js** – Reads in-stock catalog, keeps paid variants, builds one row per variant with title, item, price, product URL, talent (using a built-in JP→EN map), item type, date, and `isDigital` / `isPreorder`. Writes `items.json` (with `builtAt`), `talent-jp-to-en.json`, and `talent-search-terms.json` (per-talent EN + JP strings for filtering by title/item). The JP→EN map in the script is a full list of talents (and selected alumni) so tags and vendor names normalize to a single English display name.
