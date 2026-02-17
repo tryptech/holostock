@@ -118,29 +118,28 @@
     const sorted = sortRows(rows);
     let tableHtml =
       '<table class="items-table"><thead><tr>' +
-      '<th data-sort="title">Title <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+      '<th class="cell-title" data-sort="title">Collection <span class="sort-indicator">' + (sortKey === 'title' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th class="no-sort">Image</th>' +
       '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
       '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-      '<th class="no-sort">Link</th></tr></thead><tbody>';
+      '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th></tr></thead><tbody>';
 
     let cardsHtml = '<div class="item-cards">';
 
     sorted.forEach(function (r) {
       var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
       tableHtml += '<tr>';
-      tableHtml += '<td>' + escapeHtml(r.title || '—') + '</td>';
+      tableHtml += '<td class="cell-title">' + escapeHtml(r.title || '—') + '</td>';
       tableHtml += '<td class="cell-item">';
       (function () {
         var itemStr = r.item || '—';
         var slashIdx = itemStr.indexOf('/');
-        if (slashIdx === -1) {
-          tableHtml += '<span class="cell-item-after">' + escapeHtml(itemStr) + '</span>';
-        } else {
-          tableHtml += '<span class="cell-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="cell-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>';
-        }
+        var inner = slashIdx === -1
+          ? '<span class="cell-item-after">' + escapeHtml(itemStr) + '</span>'
+          : '<span class="cell-item-before">' + escapeHtml(itemStr.slice(0, slashIdx).trim()) + '</span><span class="cell-item-after">' + escapeHtml(itemStr.slice(slashIdx + 1).trim()) + '</span>';
+        if (r.productUrl) tableHtml += '<a href="' + escapeHtml(r.productUrl) + '" class="cell-item-link" target="_blank" rel="noopener">' + inner + '</a>';
+        else tableHtml += inner;
       })();
       tableHtml += '</td>';
       tableHtml += '<td class="cell-image">';
@@ -149,11 +148,7 @@
       tableHtml += '</td>';
       tableHtml += '<td>' + escapeHtml(r.price || '—') + '</td>';
       tableHtml += '<td>' + escapeHtml(stockStr) + '</td>';
-      tableHtml += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td>';
-      tableHtml += '<td>';
-      if (r.productUrl) tableHtml += '<a href="' + escapeHtml(r.productUrl) + '" target="_blank" rel="noopener">View</a>';
-      else tableHtml += '—';
-      tableHtml += '</td></tr>';
+      tableHtml += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td></tr>';
 
       cardsHtml += '<article class="item-card">';
       cardsHtml += '<div class="card-thumb">';
