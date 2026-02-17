@@ -58,6 +58,8 @@ No secrets required; the workflow uses the Hotyon API key in the script. To run 
 
 **Settings → Pages → Build and deployment:** **Source** → **GitHub Actions**. The workflow uploads the site (repo root plus built `data/items.json`, `data/talent-jp-to-en.json`, `data/talent-search-terms.json`) as the deployment artifact and deploys it. The SPA runs from the repo root; all asset paths are relative. No front-end build step.
 
+**Important:** Only the **Update catalog** workflow should deploy to Pages. If you have a separate workflow named **pages build and deployment** (or similar) that also deploys to GitHub Pages, it will deploy the branch without the built JSON and overwrite this deployment, causing "Failed to load data: 404". Remove or disable that workflow (e.g. delete its file under `.github/workflows/` on the default branch) so that only **Update catalog** runs the deploy step.
+
 ## Pipeline details
 
 - **fetch-full-catalog.js** – Paginates the Hotyon search API, writes full catalog and in-stock/out-of-stock JSON under `data/`.
