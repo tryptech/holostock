@@ -7,3 +7,5 @@ data/*-in-stock-table.html
 
 *.code-workspace
 /data/items.json
+/data/talent-jp-to-en.json
+/data/talent-search-terms.json

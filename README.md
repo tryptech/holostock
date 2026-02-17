@@ -14,7 +14,7 @@ Static SPA that lists in-stock items from the Hotyon hololive shop. **Live demo:
 
 ```
 ├── .github/workflows/
-│   └── update-catalog.yml      # Fetches catalog, builds data, commits updates
+│   └── update-catalog.yml      # Fetches catalog, builds data, deploys via Pages artifact
 ├── scripts/
 │   ├── fetch-full-catalog.js   # Paginate Hotyon API → data/catalog-in-stock.json
 │   └── build-in-stock-table.js # Build variant rows, talent map, search terms
@@ -22,9 +22,9 @@ Static SPA that lists in-stock items from the Hotyon hololive shop. **Live demo:
 ├── js/
 │   └── app.js
 ├── data/
-│   ├── items.json              # SPA table data
-│   ├── talent-jp-to-en.json   # JP → EN talent names
-│   └── talent-search-terms.json # Per-talent EN+JP terms for filter
+│   ├── items.json              # SPA table data (built by workflow, not committed)
+│   ├── talent-jp-to-en.json    # JP → EN talent names (built by workflow)
+│   └── talent-search-terms.json # Per-talent EN+JP terms for filter (built by workflow)
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -41,7 +41,7 @@ Static SPA that lists in-stock items from the Hotyon hololive shop. **Live demo:
    ```
    This writes `data/items.json`, `data/talent-jp-to-en.json`, and `data/talent-search-terms.json`.
 
-3. **Serve the app** (e.g. `npx serve` from repo root, or open with a static server). Deploy from branch root for GitHub Pages.
+3. **Serve the app** (e.g. `npx serve` from repo root, or open with a static server). For production, the workflow deploys the site (including built data) via GitHub Pages.
 
 **Optional:** `API_KEY=... node scripts/fetch-full-catalog.js` to override the API key. `--from-file <path>` loads an existing catalog instead of calling the API. `--physical-only` in the build script keeps only physical products (slower; calls info API per product).
 
@@ -49,14 +49,14 @@ Static SPA that lists in-stock items from the Hotyon hololive shop. **Live demo:
 
 - **Workflow:** `.github/workflows/update-catalog.yml`
 - **Triggers:** Push to `main`, `workflow_dispatch`, and every hour (`cron: '0 * * * *'`).
-- **Steps:** Checkout → Node 20 → fetch full catalog → set build timestamp → build table with `--output-json data/items.json` → commit and push `data/items.json`, `data/talent-jp-to-en.json`, and `data/talent-search-terms.json` if changed. Commit message includes `[skip ci]` to avoid re-triggering.
-- **Permissions:** `contents: write` so the job can push the data commit.
+- **Steps:** Checkout → Node 20 → fetch full catalog → set build timestamp → build table with `--output-json data/items.json` → upload the repo root (with built `data/*.json`) as the Pages artifact → deploy to GitHub Pages. The built JSON files are not committed to the repo; they exist only in the deployment artifact that Pages serves.
+- **Permissions:** `contents: read`, `pages: write` for the build job; `pages: write` for the deploy job.
 
 No secrets required; the workflow uses the Hotyon API key in the script. To run manually: **Actions → Update catalog → Run workflow**.
 
 ## GitHub Pages
 
-**Settings → Pages → Build and deployment:** **Deploy from a branch** → branch `main`, folder **/ (root)**. The SPA runs from the repo root; all asset paths are relative. No front-end build step.
+**Settings → Pages → Build and deployment:** **Source** → **GitHub Actions**. The workflow uploads the site (repo root plus built `data/items.json`, `data/talent-jp-to-en.json`, `data/talent-search-terms.json`) as the deployment artifact and deploys it. The SPA runs from the repo root; all asset paths are relative. No front-end build step.
 
 ## Pipeline details
 

@@ -1,4 +1,4 @@
-# Fetch hololive shop catalog, build in-stock table, and commit updated SPA data.
+# Fetch hololive shop catalog, build in-stock table, deploy site (with data) via Pages artifact.
 # Runs on push to main and every hour.
 name: Update catalog
 
@@ -12,15 +12,15 @@ on:
 
 jobs:
   update:
+    id: pages
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # to push updated data/*.json
+      contents: read
+      pages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -39,9 +39,23 @@ jobs:
           BUILD_TIMESTAMP: ${{ steps.set-time.outputs.timestamp }}
         run: node scripts/build-in-stock-table.js data/catalog-in-stock.json --output-json data/items.json
 
-      - name: Commit and push if data changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/items.json data/talent-jp-to-en.json data/talent-search-terms.json
-          git diff --staged --quiet || (git commit -m "chore: update catalog data [skip ci]" && git push)
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    id: deploy
+    needs: update
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
