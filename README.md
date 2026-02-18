@@ -1,6 +1,9 @@
-# holoshop-instock
+# holostock
 
-Static SPA that lists in-stock items from the official shop. **Live demo:** [tryp.tech/holoshop-instock/](https://tryp.tech/holoshop-instock/) Filter by talent (with Japanese/English name matching in title and item), exclude digital items and preorders, sort by title/item/price/date. Data is built by a Node pipeline and updated automatically every hour via GitHub Actions.
+Static SPA that lists in-stock items from the official shop.
+**Live demo:** [tryp.tech/holostock/](https://tryp.tech/holostock/)
+
+Filter by talent (with Japanese/English name matching in title and item), exclude digital items and preorders, sort by title/item/price/date. Data is built by a Node pipeline and updated automatically every hour via GitHub Actions.
 
 ## Features
 
