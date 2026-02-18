@@ -234,10 +234,23 @@ function isVariantDigital(itemType, variantLabel) {
   return false;
 }
 
-/** True if product is preorder / made-to-order (tags). */
+/** True if product has 先行発送 tag (preorder / advance shipping). */
 function isPreorder(product) {
   const tags = product?.tags || [];
-  return tags.some((t) => /受注生産|先行発送/i.test(String(t)));
+  return tags.some((t) => /先行発送/i.test(String(t)));
+}
+
+/** True if product has 受注生産 tag (made-to-order). */
+function isMadeToOrder(product) {
+  const tags = product?.tags || [];
+  return tags.some((t) => /受注生産/i.test(String(t)));
+}
+
+/** True if this variant is an "old price" option (skip when same product has a current-price variant). */
+function isOldPriceVariant(variantLabel) {
+  if (!variantLabel || typeof variantLabel !== 'string') return false;
+  const label = variantLabel.trim();
+  return /old\s*price|旧価格/i.test(label);
 }
 
 /** Format product date for display (YYYY-MM-DD). */
@@ -256,12 +269,14 @@ function buildVariantRows(product) {
   const rawDate = product?.date || null;
   const date = rawDate ? formatDate(rawDate) : null;
   const preorder = isPreorder(product);
+  const madeToOrder = isMadeToOrder(product);
   const variants = (product?.variants || []).filter(isVariantInStock);
   const rows = [];
   for (const v of variants) {
     if ((v?.price ?? 0) <= 0) continue;
     const itemTypeVal = getItemType(product, v);
     const variantLabel = getVariantLabel(product, v);
+    if (isOldPriceVariant(variantLabel)) continue;
     const rawStock = v?.available;
     const stockUnlimited = rawStock === UNLIMITED_SENTINEL;
     const stock = stockUnlimited ? null : (rawStock != null ? rawStock : null);
@@ -285,6 +300,7 @@ function buildVariantRows(product) {
       dateRaw: rawDate || undefined,
       isDigital: isVariantDigital(itemTypeVal, variantLabel),
       isPreorder: preorder,
+      isMadeToOrder: madeToOrder,
     });
   }
   return rows;

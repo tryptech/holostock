@@ -5,6 +5,7 @@
   const filterTalent = document.getElementById('filter-talent');
   const excludeDigital = document.getElementById('exclude-digital');
   const excludePreorder = document.getElementById('exclude-preorder');
+  const excludeMadeToOrder = document.getElementById('exclude-made-to-order');
   const sortModeSelect = document.getElementById('sort-mode');
   const searchInput = document.getElementById('search-input');
   const filterToggle = document.getElementById('filter-toggle');
@@ -94,11 +95,13 @@
     const talentVal = (filterTalent.value || '').trim();
     const hideDigital = excludeDigital.checked;
     const hidePreorder = excludePreorder.checked;
+    const hideMadeToOrder = excludeMadeToOrder && excludeMadeToOrder.checked;
     const searchQ = (searchInput && searchInput.value || '').trim();
 
     return allItems.filter(function (row) {
       if (hideDigital && (row.isDigital || isDigitalVoiceContent(row))) return false;
       if (hidePreorder && row.isPreorder) return false;
+      if (hideMadeToOrder && row.isMadeToOrder) return false;
       if (talentVal && !rowMatchesTalent(row, talentVal, talentSearchTerms[talentVal])) return false;
       if (searchQ && !rowMatchesSearch(row, searchQ)) return false;
       return true;
@@ -271,6 +274,7 @@
 
   const EXCLUDE_DIGITAL_KEY = 'holostock-exclude-digital';
   const EXCLUDE_PREORDER_KEY = 'holostock-exclude-preorder';
+  const EXCLUDE_MADE_TO_ORDER_KEY = 'holostock-exclude-made-to-order';
 
   function loadExcludeFromStorage() {
     try {
@@ -281,12 +285,19 @@
       var p = localStorage.getItem(EXCLUDE_PREORDER_KEY);
       if (p === 'true' || p === 'false') excludePreorder.checked = p === 'true';
     } catch (e) {}
+    try {
+      if (excludeMadeToOrder) {
+        var m = localStorage.getItem(EXCLUDE_MADE_TO_ORDER_KEY);
+        if (m === 'true' || m === 'false') excludeMadeToOrder.checked = m === 'true';
+      }
+    } catch (e) {}
   }
 
   function saveExcludeToStorage() {
     try {
       localStorage.setItem(EXCLUDE_DIGITAL_KEY, String(excludeDigital.checked));
       localStorage.setItem(EXCLUDE_PREORDER_KEY, String(excludePreorder.checked));
+      if (excludeMadeToOrder) localStorage.setItem(EXCLUDE_MADE_TO_ORDER_KEY, String(excludeMadeToOrder.checked));
     } catch (e) {}
   }
 
@@ -300,6 +311,7 @@
       if (p.has('talent')) params.talent = decodeURIComponent(p.get('talent')).trim();
       if (p.has('digital')) { var d = p.get('digital'); params.digital = d === '1' || d === 'true'; }
       if (p.has('preorder')) { var pr = p.get('preorder'); params.preorder = pr === '1' || pr === 'true'; }
+      if (p.has('madeToOrder')) { var m = p.get('madeToOrder'); params.madeToOrder = m === '1' || m === 'true'; }
     } catch (e) {}
     return params;
   }
@@ -313,6 +325,7 @@
     }
     if (params.digital != null && excludeDigital) excludeDigital.checked = params.digital;
     if (params.preorder != null && excludePreorder) excludePreorder.checked = params.preorder;
+    if (params.madeToOrder != null && excludeMadeToOrder) excludeMadeToOrder.checked = params.madeToOrder;
   }
 
   function buildUrlFromState() {
@@ -320,11 +333,13 @@
     var talent = (filterTalent && filterTalent.value || '').trim();
     var digital = excludeDigital && excludeDigital.checked;
     var preorder = excludePreorder && excludePreorder.checked;
+    var madeToOrder = excludeMadeToOrder && excludeMadeToOrder.checked;
     var p = new URLSearchParams();
     if (q) p.set('q', q);
     if (talent) p.set('talent', talent);
     p.set('digital', digital ? '1' : '0');
     p.set('preorder', preorder ? '1' : '0');
+    p.set('madeToOrder', madeToOrder ? '1' : '0');
     var search = p.toString();
     return search ? window.location.pathname + '?' + search : window.location.pathname;
   }
@@ -354,6 +369,12 @@
     saveExcludeToStorage();
     onFilterChange();
   });
+  if (excludeMadeToOrder) {
+    excludeMadeToOrder.addEventListener('change', function () {
+      saveExcludeToStorage();
+      onFilterChange();
+    });
+  }
   if (searchInput) {
     searchInput.addEventListener('input', function () {
       if (searchInputTimeout) clearTimeout(searchInputTimeout);
