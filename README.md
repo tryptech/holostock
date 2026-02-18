@@ -8,9 +8,9 @@ Filter by talent (with Japanese/English name matching in title and item), exclud
 ## Features
 
 - **Talent filter** – Dropdown of unique talents; selection matches both the row’s talent field and any occurrence of the talent name (EN or JP) in the title or item column.
-- **Exclude digital** – When checked, hides rows marked digital in the data and any row whose title or item contains “voice” or ボイス (voice packs, voice archives, voice dramas, etc.).
-- **Exclude preorder** – When checked, hides items with the 先行発送 (advance shipping) tag.
-- **Exclude made-to-order** – When checked, hides items with the 受注生産 (made-to-order) tag.
+- **Exclude digital** – When checked, hides rows marked digital in the data and any row whose title or item contains “voice”, ボイス, “audiobook”, or オーディオブック (voice packs, audiobooks, digital contents, etc.).
+- **Exclude preorder** – When checked, hides items with the 受注生産 tag (order now, produced/shipped later).
+- **Exclude made-to-order** – When checked, hides items with the 先行発送 tag or 受注販売 in the title.
 - **Sortable table** – Click column headers to sort by Title, Item, Price, or Date (default: date descending).
 - **Last updated** – Displays the build timestamp from the last pipeline run.
 

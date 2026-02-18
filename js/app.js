@@ -80,7 +80,7 @@
     var title = (row.title || '') + ' ';
     var item = row.item || '';
     var text = title + item;
-    return /\bvoice\b|ボイス/i.test(text);
+    return /\bvoice\b|ボイス/i.test(text) || /\baudiobook\b|オーディオブック/i.test(text);
   }
 
   function rowMatchesSearch(row, q) {
@@ -101,7 +101,7 @@
     return allItems.filter(function (row) {
       if (hideDigital && (row.isDigital || isDigitalVoiceContent(row))) return false;
       if (hidePreorder && row.isPreorder) return false;
-      if (hideMadeToOrder && row.isMadeToOrder) return false;
+      if (hideMadeToOrder && (row.isMadeToOrder || /受注販売/.test(row.title || ''))) return false;
       if (talentVal && !rowMatchesTalent(row, talentVal, talentSearchTerms[talentVal])) return false;
       if (searchQ && !rowMatchesSearch(row, searchQ)) return false;
       return true;

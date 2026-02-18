@@ -225,25 +225,28 @@ function getItemType(product, variant) {
   return val != null ? String(val) : '—';
 }
 
-/** True when this variant is digital: voice, download, ASMR, digital contents, etc. Uses item type and display label. */
+/** True when this variant is digital: voice, download, ASMR, digital contents, audiobook, etc. Uses item type and display label. */
 function isVariantDigital(itemType, variantLabel) {
   if (itemType === 'ボイス') return true;
   const label = (variantLabel || '').toLowerCase();
   if (/digital\s+contents|^download\s*\/|^ダウンロード\s*\//.test(label)) return true;
   if (/\bvoice\b|ボイス|asmr|system voice|situation voice|voice set/.test(label)) return true;
+  if (/\baudiobook\b|オーディオブック/.test(label)) return true;
   return false;
 }
 
-/** True if product has 先行発送 tag (preorder / advance shipping). */
+/** True if product has 受注生産 tag (preorder: order now, produced/shipped later). */
 function isPreorder(product) {
   const tags = product?.tags || [];
-  return tags.some((t) => /先行発送/i.test(String(t)));
+  return tags.some((t) => /受注生産/i.test(String(t)));
 }
 
-/** True if product has 受注生産 tag (made-to-order). */
+/** True if product has 先行発送 tag or 受注販売 in title (made-to-order). */
 function isMadeToOrder(product) {
   const tags = product?.tags || [];
-  return tags.some((t) => /受注生産/i.test(String(t)));
+  if (tags.some((t) => /先行発送/i.test(String(t)))) return true;
+  const title = product?.title || '';
+  return /受注販売/i.test(title);
 }
 
 /** True if this variant is an "old price" option (skip when same product has a current-price variant). */
