@@ -833,7 +833,7 @@ body.image-preview-open {
     font-weight: 500;
   }
 
-  .card-right .card-stock {
+  .card-right .card-availability {
     font-size: 0.8rem;
     color: var(--text-muted);
   }

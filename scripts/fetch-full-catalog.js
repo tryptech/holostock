@@ -1,32 +1,31 @@
 /**
- * Hotyon shop: fetch full catalog and/or report which items are in stock.
+ * Fetch full catalog from the official shop's public Shopify collection JSON,
+ * normalize to the internal catalog shape, and report in-stock vs out-of-stock.
  *
  * Usage (run from repo root):
- *   node scripts/fetch-full-catalog.js [output.json]     Fetch from API, save catalog, then run stock report.
+ *   node scripts/fetch-full-catalog.js [output.json]     Fetch, save catalog, then run stock report.
  *   node scripts/fetch-full-catalog.js --from-file <path> [--report-only]
  *     Load catalog from file and run stock report. Use --report-only to skip writing any JSON.
  *
  * Default output (when not --from-file and not --report-only): data/catalog.json
  * Also writes: data/catalog-in-stock.json, data/catalog-out-of-stock.json
  *
- * Stock logic (from variant.available):
- *   - available > 0        → in stock (has quantity)
- *   - available === 0      → out of stock
- *   - available === -2147483648 (INT_MIN) → treated as orderable (unlimited/preorder)
+ * Stock logic (after normalize):
+ *   - available === true           → in stock (qty unknown; Shopify public JSON is boolean-only)
+ *   - available === 0 / false      → out of stock
+ *   - available === -2147483648    → orderable unlimited (digital / untracked inventory)
  *
- * Optional env: API_KEY
+ * Source: https://shop.hololivepro.com/en/collections/all/products.json
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'https://svc-3-usf.hotyon.com/search';
-const DEFAULT_API_KEY = 'f3982e4c-9b6a-407a-b368-0fcd0b21961b';
-const COLLECTION = '432790438108';
-const TAKE = 100; // page size (fewer requests; API may cap at its max)
-const UNLIMITED_SENTINEL = -2147483648; // variant.available when stock not tracked / preorder
-
-const apiKey = process.env.API_KEY || DEFAULT_API_KEY;
+const PRODUCTS_JSON_BASE =
+  'https://shop.hololivepro.com/en/collections/all/products.json';
+const PAGE_LIMIT = 250; // Shopify max per page
+const UNLIMITED_SENTINEL = -2147483648;
+const USER_AGENT = 'holostock-catalog-fetch/1.0 (+https://github.com/tryptech/holostock)';
 
 // Parse args
 const args = process.argv.slice(2);
@@ -34,29 +33,18 @@ const fromFileIdx = args.indexOf('--from-file');
 const reportOnly = args.includes('--report-only');
 const fromFilePath = fromFileIdx >= 0 ? args[fromFileIdx + 1] : null;
 const defaultOutput = path.join(process.cwd(), 'data', 'catalog.json');
-const outputPath = reportOnly ? null : (args.find((a) => a.endsWith('.json') && a !== '--from-file') || (fromFilePath ? null : defaultOutput));
+const outputPath = reportOnly
+  ? null
+  : args.find((a) => a.endsWith('.json') && a !== fromFilePath) ||
+    (fromFilePath ? null : defaultOutput);
 
-function buildUrl(skip) {
-  const params = new URLSearchParams({
-    q: '',
-    apiKey: apiKey,
-    country: 'US',
-    locale: 'en',
-    getProductDescription: '0',
-    collection: COLLECTION,
-    skip: String(skip),
-    take: String(TAKE),
-    sort: '-date',
-  });
-  return `${BASE_URL}?${params}`;
-}
-
-/** Returns true if this variant is considered orderable (in stock or unlimited/preorder). */
+/** Returns true if this variant is considered orderable. */
 function isVariantInStock(variant) {
   const a = variant?.available;
-  if (a == null) return false;
-  if (a === UNLIMITED_SENTINEL) return true;  // unlimited / preorder
-  return a > 0;
+  if (a == null || a === false) return false;
+  if (a === true) return true;
+  if (a === UNLIMITED_SENTINEL) return true;
+  return typeof a === 'number' && a > 0;
 }
 
 /** Classify items into in-stock vs out-of-stock. */
@@ -106,13 +94,125 @@ function printStockReport(stats, options = {}) {
   }
 }
 
-async function fetchPage(skip) {
-  const url = buildUrl(skip);
+/**
+ * Map Shopify option1/option2/option3 onto option value indices
+ * (same shape Hotyon used: variant.options = [i0, i1, ...]).
+ */
+function optionIndices(product, variant) {
+  const opts = product.options || [];
+  const chosen = [variant.option1, variant.option2, variant.option3];
+  return opts.map((opt, i) => {
+    const values = opt?.values || [];
+    const val = chosen[i];
+    if (val == null) return 0;
+    const idx = values.indexOf(val);
+    return idx >= 0 ? idx : 0;
+  });
+}
+
+function imageIndexForVariant(product, variant) {
+  const images = product.images || [];
+  if (!images.length) return 0;
+  const featuredId = variant.featured_image?.id;
+  if (featuredId != null) {
+    const byId = images.findIndex((img) => img.id === featuredId);
+    if (byId >= 0) return byId;
+  }
+  const vid = variant.id;
+  const byVariant = images.findIndex(
+    (img) => Array.isArray(img.variant_ids) && img.variant_ids.includes(vid)
+  );
+  return byVariant >= 0 ? byVariant : 0;
+}
+
+/**
+ * Normalize a Shopify products.json product into the internal catalog item shape
+ * expected by build-in-stock-table.js.
+ */
+function normalizeShopifyProduct(product) {
+  const images = (product.images || []).map((img) => ({
+    url: img.src,
+    alt: img.alt ?? null,
+    width: img.width,
+    height: img.height,
+  }));
+
+  const options = (product.options || []).map((opt) => ({
+    name: opt.name,
+    values: opt.values || [],
+  }));
+
+  const variants = (product.variants || []).map((v) => {
+    const priceNum = parseFloat(v.price);
+    let available;
+    if (v.available === true) {
+      // Public JSON has no qty. Digital / unshipped → unlimited; else boolean in-stock.
+      available = v.requires_shipping === false ? UNLIMITED_SENTINEL : true;
+    } else {
+      available = 0;
+    }
+    return {
+      id: v.id,
+      sku: v.sku || null,
+      available,
+      price: Number.isFinite(priceNum) ? priceNum : 0,
+      weight: v.grams != null ? v.grams : null,
+      compareAtPrice: v.compare_at_price != null ? parseFloat(v.compare_at_price) : null,
+      imageIndex: imageIndexForVariant(product, v),
+      options: optionIndices(product, v),
+      // Keep Shopify option strings for build fallbacks
+      option1: v.option1,
+      option2: v.option2,
+      option3: v.option3,
+      requires_shipping: v.requires_shipping,
+    };
+  });
+
+  return {
+    id: product.id,
+    title: product.title,
+    urlName: product.handle,
+    vendor: product.vendor || '',
+    tags: Array.isArray(product.tags) ? product.tags : [],
+    date: product.published_at || product.created_at || null,
+    createdAt: product.created_at || null,
+    updatedAt: product.updated_at || null,
+    options,
+    images,
+    variants,
+    source: 'shopify-products-json',
+  };
+}
+
+async function fetchShopifyPage(page) {
+  const url = `${PRODUCTS_JSON_BASE}?limit=${PAGE_LIMIT}&page=${page}`;
   const res = await fetch(url, {
-    headers: { 'accept-language': 'en-US,en;q=0.9' },
+    headers: {
+      accept: 'application/json',
+      'user-agent': USER_AGENT,
+    },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   return res.json();
+}
+
+async function fetchAllShopifyProducts() {
+  const all = [];
+  let page = 1;
+  while (true) {
+    process.stdout.write(`  page=${page} ... `);
+    const json = await fetchShopifyPage(page);
+    const products = json?.products;
+    if (!Array.isArray(products)) {
+      throw new Error('Unexpected response: expected products array');
+    }
+    console.log('got', products.length);
+    if (products.length === 0) break;
+    all.push(...products.map(normalizeShopifyProduct));
+    if (products.length < PAGE_LIMIT) break;
+    page += 1;
+  }
+  return all;
 }
 
 async function main() {
@@ -130,47 +230,25 @@ async function main() {
     }
     console.log('  Loaded', allItems.length, 'items.\n');
   } else {
-    console.log('Fetching full catalog (collection', COLLECTION + ')...\n');
-    let template = null;
-    let skip = 0;
-    let totalExpected = null;
-
-    while (true) {
-      process.stdout.write(`  skip=${skip} ... `);
-      const json = await fetchPage(skip);
-      const data = json?.data;
-      const items = data?.items;
-
-      if (!Array.isArray(items)) {
-        console.error('\nUnexpected response structure.');
-        process.exit(1);
-      }
-
-      if (!template) {
-        template = { ...json, data: { ...data, items: [] } };
-        totalExpected = data.total;
-        console.log('total declared:', totalExpected);
-      } else {
-        console.log('got', items.length);
-      }
-
-      allItems.push(...items);
-      if (items.length < TAKE) break;
-      skip += TAKE;
-      if (totalExpected != null && allItems.length >= totalExpected) break;
-    }
+    console.log('Fetching full catalog from Shopify products.json...\n');
+    allItems = await fetchAllShopifyProducts();
 
     if (!reportOnly && outputPath) {
       ensureDirFor(outputPath);
-      template.data.items = allItems;
-      template.data.total = allItems.length;
-      fs.writeFileSync(outputPath, JSON.stringify(template, null, 4), 'utf8');
+      const payload = {
+        source: 'shopify-products-json',
+        fetchedAt: new Date().toISOString(),
+        data: { total: allItems.length, items: allItems },
+      };
+      fs.writeFileSync(outputPath, JSON.stringify(payload, null, 2), 'utf8');
       console.log('\n  Written:', outputPath);
     }
   }
 
   const stats = analyzeStock(allItems);
-  const basePath = catalogPath ? catalogPath.replace(/\.json$/i, '') : fromFilePath?.replace(/\.json$/i, '') || path.join(process.cwd(), 'data', 'catalog');
+  const basePath = catalogPath
+    ? catalogPath.replace(/\.json$/i, '')
+    : fromFilePath?.replace(/\.json$/i, '') || path.join(process.cwd(), 'data', 'catalog');
   printStockReport(stats, {
     writeInStockPath: basePath + '-in-stock.json',
     writeOutOfStockPath: basePath + '-out-of-stock.json',

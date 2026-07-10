@@ -91,6 +91,12 @@
     return textContains(title, q) || textContains(item, q) || textContains(talent, q);
   }
 
+  function availabilityLabel(row) {
+    if (row.availability) return row.availability;
+    if (row.stockDisplay) return row.stockDisplay;
+    return '—';
+  }
+
   function applyFilters() {
     const talentVal = (filterTalent.value || '').trim();
     const hideDigital = excludeDigital.checked;
@@ -124,13 +130,13 @@
         vb = parseDate(vb);
         return asc ? va - vb : vb - va;
       }
-      if (key === 'stock') {
-        va = a.stock != null ? a.stock : Infinity;
-        vb = b.stock != null ? b.stock : Infinity;
-        return asc ? va - vb : vb - va;
+      if (key === 'availability') {
+        va = availabilityLabel(a);
+        vb = availabilityLabel(b);
+      } else {
+        va = String(va || '');
+        vb = String(vb || '');
       }
-      va = String(va || '');
-      vb = String(vb || '');
       const c = va.localeCompare(vb, undefined, { sensitivity: 'base' });
       return asc ? c : -c;
     });
@@ -150,12 +156,13 @@
         '<th data-sort="item">Item <span class="sort-indicator">' + (sortKey === 'item' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
         '<th class="no-sort">Image</th>' +
         '<th data-sort="price">Price <span class="sort-indicator">' + (sortKey === 'price' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
-        '<th data-sort="stock">Stock <span class="sort-indicator">' + (sortKey === 'stock' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
+        '<th data-sort="availability">Availability <span class="sort-indicator">' + (sortKey === 'availability' ? (sortAsc ? '↑' : '↓') : '') + '</span></th>' +
         '<th class="cell-date" data-sort="date">Date <span class="sort-indicator">' + (sortKey === 'date' ? (sortAsc ? '↑' : '↓') : '') + '</span></th></tr></thead><tbody>';
       var tableRows = [];
       sorted.forEach(function (r) {
-        var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
-        var row = '<tr>';
+        var availStr = availabilityLabel(r);
+        var hasIds = r.productId != null && r.variantId != null;
+        var row = '<tr data-product-url="' + escapeHtml(r.productUrl || '') + '" data-item="' + escapeHtml(r.item || '') + (hasIds ? '" data-product-id="' + String(r.productId) + '" data-variant-id="' + String(r.variantId) : '') + '">';
         row += '<td class="cell-title">' + escapeHtml(r.title || '—') + '</td>';
         row += '<td class="cell-item">' + itemCellHtml(r, 'cell') + '</td>';
         row += '<td class="cell-image">';
@@ -163,7 +170,7 @@
         else row += '—';
         row += '</td>';
         row += '<td>' + escapeHtml(r.price || '—') + '</td>';
-        row += '<td>' + escapeHtml(stockStr) + '</td>';
+        row += '<td class="cell-availability">' + escapeHtml(availStr) + '</td>';
         row += '<td class="cell-date">' + escapeHtml(r.date || '—') + '</td></tr>';
         tableRows.push(row);
       });
@@ -171,8 +178,9 @@
     } else {
       var cardParts = [];
       sorted.forEach(function (r) {
-        var stockStr = r.stockDisplay != null ? r.stockDisplay : (r.stock != null ? String(r.stock) : '—');
-        var card = '<article class="item-card">';
+        var availStr = availabilityLabel(r);
+        var hasIds = r.productId != null && r.variantId != null;
+        var card = '<article class="item-card" data-product-url="' + escapeHtml(r.productUrl || '') + '" data-item="' + escapeHtml(r.item || '') + (hasIds ? '" data-product-id="' + String(r.productId) + '" data-variant-id="' + String(r.variantId) : '') + '">';
         card += '<div class="card-thumb">';
         if (r.imageUrl) card += '<img src="' + escapeHtml(r.imageUrl) + '" alt="" class="item-thumb" loading="lazy" decoding="async">';
         else card += '<span class="card-no-img">—</span>';
@@ -183,7 +191,7 @@
         card += '</div>';
         card += '<div class="card-right">';
         card += '<span class="card-price">' + escapeHtml(r.price || '—') + '</span>';
-        card += '<span class="card-stock">' + escapeHtml(stockStr) + '</span>';
+        card += '<span class="card-availability">' + escapeHtml(availStr) + '</span>';
         card += '</div>';
         card += '</article>';
         cardParts.push(card);
@@ -457,6 +465,7 @@
       if (e.target && e.target.classList && e.target.classList.contains('item-thumb') && e.target.src) {
         e.preventDefault();
         openImagePreview(e.target.src);
+        return;
       }
     });
   }

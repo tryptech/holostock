@@ -19,10 +19,13 @@ const UNLIMITED_SENTINEL = -2147483648;
 
 const defaultInputPath = path.join(process.cwd(), 'data', 'catalog-in-stock.json');
 
+/** Orderable: numeric qty, unlimited sentinel, or Shopify boolean true (qty unknown). */
 function isVariantInStock(v) {
   const a = v?.available;
-  if (a == null) return false;
-  return a === UNLIMITED_SENTINEL || a > 0;
+  if (a == null || a === false) return false;
+  if (a === true) return true;
+  if (a === UNLIMITED_SENTINEL) return true;
+  return typeof a === 'number' && a > 0;
 }
 
 function getPriceRange(item) {
@@ -53,12 +56,16 @@ function formatPrice(price) {
 function getVariantLabel(product, variant) {
   const opts = product?.options || [];
   const indices = variant?.options;
-  if (!Array.isArray(indices) || indices.length === 0) return '—';
-  const parts = opts
-    .slice(0, indices.length)
-    .map((opt, i) => opt?.values?.[indices[i]])
-    .filter(Boolean);
-  return parts.length ? parts.join(' / ') : '—';
+  if (Array.isArray(indices) && indices.length > 0 && opts.length > 0) {
+    const parts = opts
+      .slice(0, indices.length)
+      .map((opt, i) => opt?.values?.[indices[i]])
+      .filter(Boolean);
+    if (parts.length) return parts.join(' / ');
+  }
+  // Shopify-normalized variants may still carry option1/option2/option3 strings
+  const shopifyParts = [variant?.option1, variant?.option2, variant?.option3].filter(Boolean);
+  return shopifyParts.length ? shopifyParts.join(' / ') : '—';
 }
 
 /** If talent string has both English and Japanese (e.g. "English（日本語）" or "English / 日本語"), return only the first/English part. */
@@ -214,8 +221,9 @@ function getTalent(product) {
   return TALENT_JP_TO_EN[raw] || raw;
 }
 
-/** Item type from first option value (e.g. グッズ, セット). */
+/** Item type from first option value (e.g. グッズ, セット, Set, Merch). */
 function getItemType(product, variant) {
+  if (variant?.option1) return String(variant.option1);
   const opts = product?.options || [];
   const indices = variant?.options;
   if (!Array.isArray(indices) || indices.length === 0) return '—';
@@ -227,7 +235,7 @@ function getItemType(product, variant) {
 
 /** True when this variant is digital: voice, download, ASMR, digital contents, audiobook, etc. Uses item type and display label. */
 function isVariantDigital(itemType, variantLabel) {
-  if (itemType === 'ボイス') return true;
+  if (itemType === 'ボイス' || /^voice$/i.test(String(itemType || ''))) return true;
   const label = (variantLabel || '').toLowerCase();
   if (/digital\s+contents|^download\s*\/|^ダウンロード\s*\//.test(label)) return true;
   if (/\bvoice\b|ボイス|asmr|system voice|situation voice|voice set/.test(label)) return true;
@@ -282,8 +290,13 @@ function buildVariantRows(product) {
     if (isOldPriceVariant(variantLabel)) continue;
     const rawStock = v?.available;
     const stockUnlimited = rawStock === UNLIMITED_SENTINEL;
-    const stock = stockUnlimited ? null : (rawStock != null ? rawStock : null);
-    const stockDisplay = stockUnlimited ? 'Unlimited' : (stock != null ? String(stock) : '—');
+    // Shopify public JSON: available === true means in stock but qty unknown
+    const stockUnknown = rawStock === true;
+    const availability = stockUnlimited
+      ? 'Unlimited'
+      : stockUnknown || (typeof rawStock === 'number' && rawStock > 0)
+        ? 'In stock'
+        : '—';
     const images = product?.images;
     const imageIndex = v?.imageIndex != null && Array.isArray(images) ? Math.min(v.imageIndex, images.length - 1) : 0;
     const imageObj = Array.isArray(images) && images[imageIndex] ? images[imageIndex] : images?.[0];
@@ -293,10 +306,12 @@ function buildVariantRows(product) {
       title,
       item: variantLabel,
       price: formatPrice(v.price),
-      stock,
-      stockDisplay,
+      availability,
+      stockDisplay: availability,
       imageUrl: imageUrl || undefined,
       productUrl: productUrl || undefined,
+      productId: product?.id,
+      variantId: v?.id,
       talent,
       itemType: itemTypeVal,
       date: date || undefined,
