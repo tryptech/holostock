@@ -26,6 +26,8 @@ const PRODUCTS_JSON_BASE =
 const PAGE_LIMIT = 250; // Shopify max per page
 const UNLIMITED_SENTINEL = -2147483648;
 const USER_AGENT = 'holostock-catalog-fetch/1.0 (+https://github.com/tryptech/holostock)';
+const FETCH_MAX_ATTEMPTS = 5;
+const FETCH_RETRY_BASE_MS = 1000;
 
 // Parse args
 const args = process.argv.slice(2);
@@ -37,6 +39,10 @@ const outputPath = reportOnly
   ? null
   : args.find((a) => a.endsWith('.json') && a !== fromFilePath) ||
     (fromFilePath ? null : defaultOutput);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /** Returns true if this variant is considered orderable. */
 function isVariantInStock(variant) {
@@ -184,16 +190,45 @@ function normalizeShopifyProduct(product) {
   };
 }
 
+/** Retry transient Shopify failures (5xx / network). */
 async function fetchShopifyPage(page) {
   const url = `${PRODUCTS_JSON_BASE}?limit=${PAGE_LIMIT}&page=${page}`;
-  const res = await fetch(url, {
-    headers: {
-      accept: 'application/json',
-      'user-agent': USER_AGENT,
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res.json();
+  let lastErr;
+
+  for (let attempt = 1; attempt <= FETCH_MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          accept: 'application/json',
+          'user-agent': USER_AGENT,
+        },
+      });
+
+      if (res.ok) return res.json();
+
+      lastErr = new Error(`HTTP ${res.status}: ${url}`);
+      const isRetryable = res.status >= 500 && res.status <= 599;
+      if (!isRetryable) throw lastErr;
+    } catch (err) {
+      // Non-retryable HTTP (4xx etc.) — fail immediately
+      if (err && err.message && /^HTTP 4\d\d:/.test(err.message)) {
+        throw err;
+      }
+      lastErr = err;
+    }
+
+    if (attempt === FETCH_MAX_ATTEMPTS) break;
+
+    const delay = FETCH_RETRY_BASE_MS * Math.pow(2, attempt - 1);
+    const reason =
+      lastErr && lastErr.message && /^HTTP 5\d\d:/.test(lastErr.message)
+        ? lastErr.message.match(/^HTTP (\d+)/)[1]
+        : 'network error';
+    process.stdout.write(`${reason}, retry ${attempt}/${FETCH_MAX_ATTEMPTS} in ${delay}ms ... `);
+    await sleep(delay);
+  }
+
+  throw lastErr || new Error(`Failed to fetch ${url}`);
 }
 
 async function fetchAllShopifyProducts() {
