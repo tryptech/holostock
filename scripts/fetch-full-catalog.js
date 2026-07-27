@@ -28,6 +28,8 @@ const UNLIMITED_SENTINEL = -2147483648;
 const USER_AGENT = 'holostock-catalog-fetch/1.0 (+https://github.com/tryptech/holostock)';
 const FETCH_MAX_ATTEMPTS = 5;
 const FETCH_RETRY_BASE_MS = 1000;
+const FETCH_429_BASE_MS = 5000;
+const PAGE_DELAY_MS = 1500; // pause between pages to reduce 429s
 
 // Parse args
 const args = process.argv.slice(2);
@@ -190,10 +192,27 @@ function normalizeShopifyProduct(product) {
   };
 }
 
-/** Retry transient Shopify failures (5xx / network). */
+function retryDelayMs(status, attempt, retryAfterHeader) {
+  if (retryAfterHeader) {
+    const asSeconds = Number(retryAfterHeader);
+    if (Number.isFinite(asSeconds) && asSeconds >= 0) {
+      return Math.max(1000, Math.ceil(asSeconds * 1000));
+    }
+    const asDate = Date.parse(retryAfterHeader);
+    if (!Number.isNaN(asDate)) {
+      return Math.max(1000, asDate - Date.now());
+    }
+  }
+  const base = status === 429 ? FETCH_429_BASE_MS : FETCH_RETRY_BASE_MS;
+  return base * Math.pow(2, attempt - 1);
+}
+
+/** Retry transient Shopify failures (429, 5xx, network). */
 async function fetchShopifyPage(page) {
   const url = `${PRODUCTS_JSON_BASE}?limit=${PAGE_LIMIT}&page=${page}`;
   let lastErr;
+  let lastStatus = null;
+  let lastRetryAfter = null;
 
   for (let attempt = 1; attempt <= FETCH_MAX_ATTEMPTS; attempt++) {
     try {
@@ -206,24 +225,27 @@ async function fetchShopifyPage(page) {
 
       if (res.ok) return res.json();
 
+      lastStatus = res.status;
+      lastRetryAfter = res.headers.get('retry-after');
       lastErr = new Error(`HTTP ${res.status}: ${url}`);
-      const isRetryable = res.status >= 500 && res.status <= 599;
+      const isRetryable = res.status === 429 || (res.status >= 500 && res.status <= 599);
       if (!isRetryable) throw lastErr;
     } catch (err) {
-      // Non-retryable HTTP (4xx etc.) — fail immediately
-      if (err && err.message && /^HTTP 4\d\d:/.test(err.message)) {
+      // Non-retryable HTTP (other 4xx) — fail immediately
+      if (err && err.message && /^HTTP 4\d\d:/.test(err.message) && !/^HTTP 429:/.test(err.message)) {
         throw err;
       }
       lastErr = err;
+      if (!(err && err.message && /^HTTP (429|5\d\d):/.test(err.message))) {
+        lastStatus = null;
+        lastRetryAfter = null;
+      }
     }
 
     if (attempt === FETCH_MAX_ATTEMPTS) break;
 
-    const delay = FETCH_RETRY_BASE_MS * Math.pow(2, attempt - 1);
-    const reason =
-      lastErr && lastErr.message && /^HTTP 5\d\d:/.test(lastErr.message)
-        ? lastErr.message.match(/^HTTP (\d+)/)[1]
-        : 'network error';
+    const delay = retryDelayMs(lastStatus, attempt, lastRetryAfter);
+    const reason = lastStatus != null ? String(lastStatus) : 'network error';
     process.stdout.write(`${reason}, retry ${attempt}/${FETCH_MAX_ATTEMPTS} in ${delay}ms ... `);
     await sleep(delay);
   }
@@ -235,6 +257,7 @@ async function fetchAllShopifyProducts() {
   const all = [];
   let page = 1;
   while (true) {
+    if (page > 1) await sleep(PAGE_DELAY_MS);
     process.stdout.write(`  page=${page} ... `);
     const json = await fetchShopifyPage(page);
     const products = json?.products;
